@@ -1081,33 +1081,31 @@ function saveCoverCache(){
    there's nothing left. Falls back to a cached copy if the network
    fails, and re-fetches automatically once the season rolls over. */
 function fetchSeasonAnime(season,year,onDone){
-  var out=[],page=1,MAXP=8;
+  // Query by actual air-date range instead of AniList's own season/seasonYear
+  // tag — that tag turns out to be inconsistent for shows that premiere right
+  // at a season boundary, which was silently dropping real shows. Date range
+  // is ground truth and doesn't have that problem.
+  var range=seasonRange(season,year);
+  var winStart=new Date(range.start.getTime()-14*86400000); // 2-week grace before "official" start
+  var winEnd=range.end;
+  var startInt=winStart.getUTCFullYear()*10000+(winStart.getUTCMonth()+1)*100+winStart.getUTCDate();
+  var endInt=winEnd.getUTCFullYear()*10000+(winEnd.getUTCMonth()+1)*100+winEnd.getUTCDate();
+  var out=[],page=1,MAXP=12;
   function pull(){
-    var q='query($p:Int){Page(page:$p,perPage:50){pageInfo{hasNextPage}media(season:'+season+',seasonYear:'+year+',type:ANIME,format:TV,sort:POPULARITY_DESC){id title{english romaji}coverImage{extraLarge}description(asHtml:false)startDate{year month day}nextAiringEpisode{airingAt episode}}}}';
+    var q='query($p:Int){Page(page:$p,perPage:50){pageInfo{hasNextPage}media(type:ANIME,format:TV,startDate_greater:'+(startInt-1)+',startDate_lesser:'+(endInt+1)+',sort:POPULARITY_DESC){id title{english romaji}coverImage{extraLarge}description(asHtml:false)startDate{year month day}nextAiringEpisode{airingAt episode}}}}';
     fetch('https://graphql.anilist.co',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},
       body:JSON.stringify({query:q,variables:{p:page}})})
     .then(function(r){return r.json();})
     .then(function(data){
       var pg=data&&data.data&&data.data.Page;
       var media=(pg&&pg.media)||[];
-      var seasonStartMs=seasonRange(season,year).start.getTime();
       media.forEach(function(m){
-        var sd=m.startDate,ds=null,utc='130000';
-        if(sd&&sd.year&&sd.month&&sd.day){
-          ds=sd.year+''+p2(sd.month)+''+p2(sd.day);
-          if(m.nextAiringEpisode&&m.nextAiringEpisode.airingAt){
-            var ad=new Date(m.nextAiringEpisode.airingAt*1000);
-            utc=p2(ad.getUTCHours())+p2(ad.getUTCMinutes())+p2(ad.getUTCSeconds());
-          }
-        }else if(m.nextAiringEpisode&&m.nextAiringEpisode.airingAt){
-          // startDate is missing/incomplete (common right around a premiere) —
-          // anchor off the next episode instead of dropping the show entirely
-          var nd=new Date(m.nextAiringEpisode.airingAt*1000);
-          while(nd.getTime()-7*86400000>=seasonStartMs)nd=new Date(nd.getTime()-7*86400000);
-          ds=nd.getUTCFullYear()+''+p2(nd.getUTCMonth()+1)+''+p2(nd.getUTCDate());
-          utc=p2(nd.getUTCHours())+p2(nd.getUTCMinutes())+p2(nd.getUTCSeconds());
-        }else{
-          return; // truly no date info available at all yet
+        var sd=m.startDate;if(!sd||!sd.year||!sd.month||!sd.day)return;
+        var ds=sd.year+''+p2(sd.month)+''+p2(sd.day);
+        var utc='130000';
+        if(m.nextAiringEpisode&&m.nextAiringEpisode.airingAt){
+          var ad=new Date(m.nextAiringEpisode.airingAt*1000);
+          utc=p2(ad.getUTCHours())+p2(ad.getUTCMinutes())+p2(ad.getUTCSeconds());
         }
         var title=(m.title.english||m.title.romaji||'Unknown').trim();
         var id='al'+m.id;
@@ -1122,11 +1120,10 @@ function fetchSeasonAnime(season,year,onDone){
   }
   pull();
 }
-/* Long-running franchises (One Piece, Detective Conan, Pokémon, etc.) premiered
-   in an earlier season, so AniList's season/seasonYear filter above misses
-   them. Pull anything currently RELEASING and merge in whatever isn't
-   already covered — this keeps working automatically forever, no manual
-   list of "continuing" shows to maintain each season. */
+/* Long-running franchises (One Piece, Detective Conan, Pokémon, etc.) started
+   way outside any date window above, but are still airing right now. Pull
+   anything currently RELEASING among the most popular shows and merge in
+   whatever isn't already covered — keeps working forever, no manual list. */
 function fetchContinuingAnime(season,year,seasonList,onDone){
   var have={};seasonList.forEach(function(a){have[a.al]=true;});
   var range=seasonRange(season,year),seasonStartMs=range.start.getTime();
@@ -1140,7 +1137,7 @@ function fetchContinuingAnime(season,year,seasonList,onDone){
       var pg=data&&data.data&&data.data.Page;
       var media=(pg&&pg.media)||[];
       media.forEach(function(m){
-        if(have[m.id])return; // already covered by the seasonal list
+        if(have[m.id])return; // already covered by the date-range list
         if(!m.nextAiringEpisode||!m.nextAiringEpisode.airingAt)return; // not actually airing anymore
         var d=new Date(m.nextAiringEpisode.airingAt*1000);
         while(d.getTime()-7*86400000>=seasonStartMs)d=new Date(d.getTime()-7*86400000);
@@ -1156,7 +1153,7 @@ function fetchContinuingAnime(season,year,seasonList,onDone){
       if(pg&&pg.pageInfo&&pg.pageInfo.hasNextPage&&page<MAXP){page++;pull();}
       else onDone(seasonList.concat(out));
     })
-    .catch(function(){onDone(seasonList.length||out.length?seasonList.concat(out):null);});
+    .catch(function(){onDone(seasonList.length?seasonList.concat(out):null);});
   }
   pull();
 }
