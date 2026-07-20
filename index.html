@@ -1090,13 +1090,24 @@ function fetchSeasonAnime(season,year,onDone){
     .then(function(data){
       var pg=data&&data.data&&data.data.Page;
       var media=(pg&&pg.media)||[];
+      var seasonStartMs=seasonRange(season,year).start.getTime();
       media.forEach(function(m){
-        var sd=m.startDate;if(!sd||!sd.year||!sd.month||!sd.day)return;
-        var ds=sd.year+''+p2(sd.month)+''+p2(sd.day);
-        var utc='130000';
-        if(m.nextAiringEpisode&&m.nextAiringEpisode.airingAt){
-          var ad=new Date(m.nextAiringEpisode.airingAt*1000);
-          utc=p2(ad.getUTCHours())+p2(ad.getUTCMinutes())+p2(ad.getUTCSeconds());
+        var sd=m.startDate,ds=null,utc='130000';
+        if(sd&&sd.year&&sd.month&&sd.day){
+          ds=sd.year+''+p2(sd.month)+''+p2(sd.day);
+          if(m.nextAiringEpisode&&m.nextAiringEpisode.airingAt){
+            var ad=new Date(m.nextAiringEpisode.airingAt*1000);
+            utc=p2(ad.getUTCHours())+p2(ad.getUTCMinutes())+p2(ad.getUTCSeconds());
+          }
+        }else if(m.nextAiringEpisode&&m.nextAiringEpisode.airingAt){
+          // startDate is missing/incomplete (common right around a premiere) —
+          // anchor off the next episode instead of dropping the show entirely
+          var nd=new Date(m.nextAiringEpisode.airingAt*1000);
+          while(nd.getTime()-7*86400000>=seasonStartMs)nd=new Date(nd.getTime()-7*86400000);
+          ds=nd.getUTCFullYear()+''+p2(nd.getUTCMonth()+1)+''+p2(nd.getUTCDate());
+          utc=p2(nd.getUTCHours())+p2(nd.getUTCMinutes())+p2(nd.getUTCSeconds());
+        }else{
+          return; // truly no date info available at all yet
         }
         var title=(m.title.english||m.title.romaji||'Unknown').trim();
         var id='al'+m.id;
