@@ -1105,9 +1105,47 @@ function fetchSeasonAnime(season,year,onDone){
         out.push({id:id,title:title,al:m.id,pl:'cr',t:'n',dub:0,s:ds,utc:utc});
       });
       if(pg&&pg.pageInfo&&pg.pageInfo.hasNextPage&&page<MAXP){page++;pull();}
-      else onDone(out);
+      else fetchContinuingAnime(season,year,out,onDone);
     })
     .catch(function(){onDone(out.length?out:null);});
+  }
+  pull();
+}
+/* Long-running franchises (One Piece, Detective Conan, Pokémon, etc.) premiered
+   in an earlier season, so AniList's season/seasonYear filter above misses
+   them. Pull anything currently RELEASING and merge in whatever isn't
+   already covered — this keeps working automatically forever, no manual
+   list of "continuing" shows to maintain each season. */
+function fetchContinuingAnime(season,year,seasonList,onDone){
+  var have={};seasonList.forEach(function(a){have[a.al]=true;});
+  var range=seasonRange(season,year),seasonStartMs=range.start.getTime();
+  var out=[],page=1,MAXP=3;
+  function pull(){
+    var q='query($p:Int){Page(page:$p,perPage:50){pageInfo{hasNextPage}media(status:RELEASING,type:ANIME,format:TV,sort:POPULARITY_DESC){id title{english romaji}coverImage{extraLarge}description(asHtml:false)nextAiringEpisode{airingAt episode}}}}';
+    fetch('https://graphql.anilist.co',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body:JSON.stringify({query:q,variables:{p:page}})})
+    .then(function(r){return r.json();})
+    .then(function(data){
+      var pg=data&&data.data&&data.data.Page;
+      var media=(pg&&pg.media)||[];
+      media.forEach(function(m){
+        if(have[m.id])return; // already covered by the seasonal list
+        if(!m.nextAiringEpisode||!m.nextAiringEpisode.airingAt)return; // not actually airing anymore
+        var d=new Date(m.nextAiringEpisode.airingAt*1000);
+        while(d.getTime()-7*86400000>=seasonStartMs)d=new Date(d.getTime()-7*86400000);
+        var ds=d.getUTCFullYear()+''+p2(d.getUTCMonth()+1)+''+p2(d.getUTCDate());
+        var utc=p2(d.getUTCHours())+p2(d.getUTCMinutes())+p2(d.getUTCSeconds());
+        var title=(m.title.english||m.title.romaji||'Unknown').trim();
+        var id='al'+m.id;
+        if(m.coverImage&&m.coverImage.extraLarge)covers[id]=m.coverImage.extraLarge;
+        if(m.description)descCache[m.id]=m.description.replace(/<[^>]*>/g,'').replace(/\n+/g,' ').trim();
+        out.push({id:id,title:title,al:m.id,pl:'cr',t:'c',dub:0,s:ds,utc:utc});
+        have[m.id]=true;
+      });
+      if(pg&&pg.pageInfo&&pg.pageInfo.hasNextPage&&page<MAXP){page++;pull();}
+      else onDone(seasonList.concat(out));
+    })
+    .catch(function(){onDone(seasonList.length||out.length?seasonList.concat(out):null);});
   }
   pull();
 }
@@ -2546,4 +2584,4 @@ loadSeasonData(false,function(){
 });
 </script>
 </body>
-</html> 
+</html>
