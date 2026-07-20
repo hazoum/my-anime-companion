@@ -1,0 +1,2549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Anime Companion">
+<meta name="theme-color" content="#08080f">
+<link id="appIcon" rel="apple-touch-icon" href="">
+<title id="pageTitle">My Anime Companion</title>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+*,*:before,*:after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#08080f;--surface:#111119;--card:#16161f;--card2:#1c1c28;--border:#22223a;
+  --orange:#f47521;--orange2:rgba(244,117,33,.12);--purple:#7c52d9;
+  --text:#eeeef5;--muted:#5a5a78;--muted2:#8888a8;--green:#3ecf8e;
+  --cr:#f47521;--nf:#e50914;--hd:#00b4d8;--hv:#1ce783;
+  --dw:380px;--st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px);
+}
+html,body{height:100%;overflow-x:hidden}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;padding-top:var(--st)}
+
+/* INSTALL BANNER */
+.ib{display:none;background:linear-gradient(90deg,rgba(244,117,33,.12),rgba(124,82,217,.12));
+  border-bottom:1px solid var(--border);padding:10px 14px;align-items:center;gap:10px;font-size:12px}
+.ib.show{display:flex}
+.ib b{color:var(--orange)}
+.ib-t{color:var(--muted2);flex:1;line-height:1.5}
+.ib-x{background:none;border:none;color:var(--muted);font-size:17px;cursor:pointer;padding:0 4px}
+
+/* HEADER */
+header{background:linear-gradient(135deg,#0c0c1a 0%,#160830 45%,#080e16 100%);
+  border-bottom:1px solid var(--border);padding:14px 14px 0;position:sticky;top:0;z-index:50}
+.hi{max-width:1280px;margin:0 auto;display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-bottom:10px}
+.hl{flex:1;min-width:160px}
+.sbadge{display:inline-flex;align-items:center;background:var(--orange2);border:1px solid rgba(244,117,33,.3);
+  color:var(--orange);font-family:'Rajdhani',sans-serif;font-weight:700;font-size:9px;
+  letter-spacing:1.5px;text-transform:uppercase;padding:2px 8px;border-radius:20px;margin-bottom:4px}
+header h1{font-family:'Rajdhani',sans-serif;font-size:clamp(17px,3vw,23px);font-weight:700}
+header h1 em{color:var(--orange);font-style:normal}
+header p{color:var(--muted2);font-size:10px;margin-top:2px}
+.hbtns{display:flex;gap:6px;flex-shrink:0}
+.hbtn{display:flex;align-items:center;gap:5px;background:var(--surface);border:1px solid var(--border);
+  color:var(--muted2);font-family:'Inter',sans-serif;font-size:10px;font-weight:500;
+  padding:6px 10px;border-radius:8px;cursor:pointer;transition:all .2s;white-space:nowrap;
+  -webkit-tap-highlight-color:transparent}
+.hbtn:active{border-color:var(--orange);color:var(--orange)}
+.hbtn.notif-on{border-color:var(--green)!important;color:var(--green)!important}
+.hbtn svg{flex-shrink:0}
+.hbtn.spin svg{animation:spinsvg 1s linear infinite}
+@keyframes spinsvg{to{transform:rotate(360deg)}}
+.udot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s ease-in-out infinite}
+.udot.sync-off{background:var(--muted2);animation:none}
+.udot.sync-synced{background:var(--green);animation:none}
+.udot.sync-syncing{background:var(--orange);animation:pulse 1s ease-in-out infinite}
+.udot.sync-error{background:var(--nf);animation:none}
+.udot.sync-unconfigured{background:var(--muted2);animation:none}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+
+/* TABS */
+.tabs{display:flex;gap:0;max-width:1280px;margin:0 auto;border-top:1px solid var(--border)}
+.tab{flex:1;padding:10px 8px;text-align:center;font-family:'Rajdhani',sans-serif;font-weight:700;
+  font-size:11px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted2);
+  cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;
+  -webkit-tap-highlight-color:transparent;display:flex;align-items:center;justify-content:center;gap:5px}
+.tab:active{color:var(--text)}
+.tab.on{color:var(--orange);border-bottom-color:var(--orange)}
+.tab-badge{background:var(--orange);color:#fff;font-size:8px;font-family:'Rajdhani',sans-serif;
+  font-weight:700;padding:1px 5px;border-radius:10px;min-width:16px;text-align:center}
+
+/* TOOLBAR */
+.toolbar{max-width:1280px;margin:0 auto;padding:9px 12px 0;display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+.sw{flex:1;min-width:130px;position:relative}
+.sw input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;
+  color:var(--text);font-size:12px;padding:7px 10px 7px 28px;outline:none;
+  font-family:'Inter',sans-serif;-webkit-appearance:none}
+.sw input:focus{border-color:var(--orange)}
+.sw svg{position:absolute;left:8px;top:50%;transform:translateY(-50%);opacity:.3;pointer-events:none}
+.fb{background:var(--surface);border:1px solid var(--border);color:var(--muted2);
+  font-size:9px;font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.7px;
+  text-transform:uppercase;padding:5px 9px;border-radius:8px;cursor:pointer;
+  white-space:nowrap;-webkit-tap-highlight-color:transparent;transition:all .15s}
+.fb.on{border-color:var(--orange);color:var(--orange);background:var(--orange2)}
+
+/* STATUSBAR */
+.statusbar{max-width:1280px;margin:0 auto;padding:5px 12px 2px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.stat{font-size:10px;color:var(--muted2)}.stat b{color:var(--text);font-weight:600}
+
+/* LOADING */
+.lbanner{max-width:1280px;margin:0 auto;padding:4px 12px;display:flex;align-items:center;
+  gap:7px;font-size:11px;color:var(--muted2);min-height:22px}
+.lbanner.done{visibility:hidden}
+.lspin{width:10px;height:10px;border:2px solid var(--border);border-top-color:var(--orange);
+  border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.ltrack{flex:1;max-width:80px;height:2px;background:var(--border);border-radius:1px}
+.lprog{height:2px;background:var(--orange);border-radius:1px;width:0%;transition:width .3s}
+
+/* PAGES */
+.page{max-width:1280px;margin:0 auto;padding:4px 11px 110px;transition:margin-right .3s}
+.page.drawer-open{margin-right:var(--dw)}
+.pview{display:none}
+.pview.on{display:block}
+
+/* BROWSE — day sections & grid */
+.day-sec{margin-top:20px}
+.day-hd{font-family:'Rajdhani',sans-serif;font-size:9px;font-weight:700;letter-spacing:2px;
+  text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);
+  padding-bottom:7px;margin-bottom:11px;display:flex;align-items:center;gap:8px}
+.dpill{background:var(--surface);border:1px solid var(--border);color:var(--muted2);
+  font-size:9px;font-family:'Rajdhani',sans-serif;font-weight:600;letter-spacing:.6px;padding:2px 7px;border-radius:4px}
+.dcount{font-size:9px;color:var(--muted);margin-left:auto;font-family:'Rajdhani',sans-serif}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(135px,1fr));gap:9px}
+
+/* CARD */
+.acard{cursor:pointer;border-radius:9px;overflow:hidden;border:2px solid transparent;
+  background:var(--card);transition:border-color .15s,transform .15s,box-shadow .15s;
+  position:relative;-webkit-tap-highlight-color:transparent}
+.acard:active{transform:scale(.97)}
+.acard.sel{border-color:var(--orange);box-shadow:0 0 0 1px var(--orange),0 4px 18px rgba(244,117,33,.18)}
+.acard.adraw{border-color:var(--purple)}
+.pstrip{position:absolute;top:0;left:0;right:0;height:3px;z-index:6}
+.pstrip.cr{background:var(--cr)}.pstrip.nf{background:var(--nf)}.pstrip.hd{background:var(--hd)}.pstrip.hv{background:var(--hv)}
+.ck{position:absolute;top:8px;right:6px;z-index:7;width:22px;height:22px;border-radius:50%;
+  background:rgba(8,8,15,.78);border:2px solid rgba(255,255,255,.22);
+  display:flex;align-items:center;justify-content:center;transition:all .15s;backdrop-filter:blur(5px)}
+.acard.sel .ck{background:var(--orange);border-color:var(--orange)}
+.ck::after{content:'✓';color:transparent;font-size:11px;font-weight:900}
+.acard.sel .ck::after{color:#fff}
+.nbadge{position:absolute;bottom:5px;left:5px;z-index:6;background:var(--green);color:#061208;
+  font-family:'Rajdhani',sans-serif;font-weight:700;font-size:7px;letter-spacing:.9px;
+  text-transform:uppercase;padding:1px 5px;border-radius:3px}
+.noti{position:absolute;top:8px;left:6px;z-index:7;font-size:10px;background:rgba(8,8,15,.78);
+  border-radius:50%;width:19px;height:19px;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.pw{width:100%;padding-top:143%;position:relative;overflow:hidden;background:#0e0e18}
+.shimmer{position:absolute;inset:0;
+  background:linear-gradient(90deg,#12122000 0%,#1e1e3050 50%,#12122000 100%);
+  background-size:200% 100%;animation:shim 1.4s infinite}
+@keyframes shim{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.pw img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .35s;z-index:2}
+.pw img.vis{opacity:1}
+.ci{padding:7px 8px 8px}
+.ct{font-size:11px;font-weight:500;color:var(--text);line-height:1.3;
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;max-height:29px}
+.tags{display:flex;gap:3px;margin-top:5px;flex-wrap:wrap}
+.tag{font-size:7.5px;font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.6px;
+  text-transform:uppercase;padding:1px 4px;border-radius:3px;border:1px solid}
+.tdub{color:var(--green);background:rgba(62,207,142,.09);border-color:rgba(62,207,142,.3)}
+.tsub{color:var(--muted2);background:transparent;border-color:var(--border)}
+.tpl{font-size:7.5px;font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.4px;
+  text-transform:uppercase;padding:1px 4px;border-radius:3px;border:1px solid}
+.tpl.cr{color:var(--cr);border-color:rgba(244,117,33,.35);background:rgba(244,117,33,.07)}
+.tpl.nf{color:#ff7070;border-color:rgba(229,9,20,.35);background:rgba(229,9,20,.07)}
+.tpl.hd{color:var(--hd);border-color:rgba(0,180,216,.35);background:rgba(0,180,216,.07)}
+.tpl.hv{color:var(--hv);border-color:rgba(28,231,131,.35);background:rgba(28,231,131,.07)}
+.rec-card{cursor:default}
+.rec-card:active{transform:none}
+.rec-actions{display:flex;gap:5px;margin-top:7px}
+.rec-actions .lsr-btn{flex:1;text-align:center;padding:5px 4px}
+
+/* ═══════════════════════════════════════════════
+   MY LIST — countdown cards
+   ═══════════════════════════════════════════════ */
+.mylist-empty{text-align:center;padding:60px 20px 40px;color:var(--muted)}
+.mylist-empty .mle-ico{font-size:48px;margin-bottom:14px}
+.mylist-empty p{font-size:13px;line-height:1.8;color:var(--muted2)}
+.mylist-empty b{color:var(--orange)}
+.mylist-header{padding:14px 0 6px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.mylist-title{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted2)}
+.mylist-sort{display:flex;gap:5px;align-items:center}
+.msort-btn{font-size:9px;font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.6px;
+  text-transform:uppercase;padding:4px 9px;border-radius:7px;cursor:pointer;border:1px solid var(--border);
+  background:var(--surface);color:var(--muted2);transition:all .15s;-webkit-tap-highlight-color:transparent}
+.msort-btn.on{border-color:var(--orange);color:var(--orange);background:var(--orange2)}
+
+/* countdown row card */
+.ccard{background:var(--card);border:1px solid var(--border);border-radius:12px;
+  overflow:hidden;margin-bottom:10px;cursor:pointer;-webkit-tap-highlight-color:transparent;
+  transition:border-color .15s,box-shadow .15s,transform .1s;position:relative}
+.ccard:active{transform:scale(.99);opacity:.9}
+.ccard.adraw{border-color:var(--purple);box-shadow:0 0 0 1px var(--purple)}
+/* urgency states */
+.ccard.urgent{border-color:rgba(245,197,24,.5);background:linear-gradient(135deg,var(--card) 0%,rgba(245,197,24,.04) 100%)}
+.ccard.soon{border-color:rgba(244,117,33,.4);background:linear-gradient(135deg,var(--card) 0%,rgba(244,117,33,.04) 100%)}
+.ccard.airing{border-color:rgba(62,207,142,.5);background:linear-gradient(135deg,var(--card) 0%,rgba(62,207,142,.06) 100%)}
+
+.ccard-top{display:flex;align-items:stretch}
+.ccard-pl{width:4px;flex-shrink:0;border-radius:12px 0 0 0}
+.ccard-pl.cr{background:var(--cr)}.ccard-pl.nf{background:var(--nf)}
+.ccard-pl.hd{background:var(--hd)}.ccard-pl.hv{background:var(--hv)}
+.ccard-img{width:70px;height:98px;flex-shrink:0;object-fit:cover;display:block;background:#0e0e18}
+.ccard-img-ph{width:70px;height:98px;flex-shrink:0;background:#0e0e18;
+  display:flex;align-items:center;justify-content:center;font-size:26px}
+.ccard-body{flex:1;padding:11px 12px 10px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.ccard-title{font-size:13px;font-weight:600;color:var(--text);line-height:1.3;
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;padding-right:24px}
+.ccard-meta{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+.ep-info{font-size:10px;color:var(--muted2);line-height:1.4}
+.ep-info b{color:var(--text)}
+
+/* COUNTDOWN BLOCK — bottom of card */
+.ccard-cd{padding:10px 12px 12px 74px;border-top:1px solid var(--border)}
+.cd-label{font-size:8px;font-family:'Rajdhani',sans-serif;font-weight:700;
+  letter-spacing:1.2px;text-transform:uppercase;color:var(--muted2);margin-bottom:5px;
+  display:flex;align-items:center;gap:6px}
+.cd-label-urgent{color:#f5c518}
+.cd-label-soon{color:var(--orange)}
+.cd-label-green{color:var(--green)}
+.countdown-value{display:flex;gap:0;align-items:stretch}
+.cd-block{display:flex;flex-direction:column;align-items:center;min-width:0;flex:1;max-width:60px}
+.cd-num{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:28px;line-height:1;
+  letter-spacing:-1px;transition:color .3s}
+.cd-num.orange{color:var(--orange)}
+.cd-num.yellow{color:#f5c518}
+.cd-num.green{color:var(--green)}
+.cd-num.gray{color:var(--muted2)}
+.cd-unit{font-size:7px;font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:1px;
+  text-transform:uppercase;color:var(--muted);margin-top:1px}
+.cd-sep{font-family:'Rajdhani',sans-serif;font-weight:300;font-size:22px;color:var(--border);
+  padding:0 2px;align-self:center;margin-bottom:8px}
+/* Airing now pill */
+.airing-pill{display:inline-flex;align-items:center;gap:6px;
+  background:rgba(62,207,142,.12);border:1px solid rgba(62,207,142,.35);
+  border-radius:8px;padding:5px 12px}
+.airing-dot{width:7px;height:7px;border-radius:50%;background:var(--green);
+  animation:airingPulse .9s ease-in-out infinite}
+@keyframes airingPulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.3;transform:scale(.6)}}
+.airing-txt{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:11px;
+  letter-spacing:1px;text-transform:uppercase;color:var(--green)}
+/* Progress bar */
+.cd-progress{height:3px;background:var(--border);border-radius:2px;margin-top:8px;overflow:hidden}
+.cd-progress-fill{height:100%;border-radius:2px;transition:width .9s linear}
+.cd-progress-fill.orange{background:linear-gradient(90deg,var(--orange),#f5a623)}
+.cd-progress-fill.yellow{background:linear-gradient(90deg,#f5c518,#f5a623)}
+.cd-progress-fill.green{background:linear-gradient(90deg,var(--green),#2ecc71)}
+/* Remove button */
+.ccard-remove{position:absolute;top:9px;right:9px;width:22px;height:22px;border-radius:50%;
+  background:rgba(8,8,15,.75);border:1px solid var(--border);color:var(--muted2);
+  font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  backdrop-filter:blur(4px);-webkit-tap-highlight-color:transparent;transition:all .15s;z-index:5}
+.ccard-remove:active{border-color:var(--nf);color:var(--nf)}
+
+/* DRAWER */
+.drawer{position:fixed;top:0;right:0;bottom:0;width:var(--dw);background:var(--surface);
+  border-left:1px solid var(--border);z-index:200;transform:translateX(100%);
+  transition:transform .3s cubic-bezier(.22,.68,0,1.2);display:flex;flex-direction:column;overflow:hidden}
+.drawer.open{transform:translateX(0)}
+.diw{width:100%;height:195px;flex-shrink:0;position:relative;background:#0e0e18;overflow:hidden}
+.diw img{width:100%;height:100%;object-fit:cover;display:block}
+.dph{width:100%;height:195px;flex-shrink:0;display:flex;align-items:center;
+  justify-content:center;font-size:44px;background:#0e0e18}
+.dpl{height:3px;flex-shrink:0}
+.dpl.cr{background:var(--cr)}.dpl.nf{background:var(--nf)}.dpl.hd{background:var(--hd)}.dpl.hv{background:var(--hv)}
+.dclose{position:absolute;top:8px;right:8px;width:27px;height:27px;border-radius:50%;
+  background:rgba(8,8,15,.85);border:1px solid var(--border);color:var(--text);font-size:12px;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);z-index:10}
+.dclose:active{border-color:var(--orange)}
+.dbody{flex:1;overflow-y:auto;padding:13px 14px 18px;-webkit-overflow-scrolling:touch}
+.dtitle{font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;line-height:1.2;margin-bottom:8px}
+.dmeta{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:9px}
+.dinfo{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:11px}
+.ic{font-size:10px;color:var(--muted2);background:var(--card2);border:1px solid var(--border);
+  border-radius:5px;padding:3px 7px;display:flex;align-items:center;gap:3px}
+.ic b{color:var(--text);font-weight:500}
+.nbox{background:var(--card2);border:1px solid rgba(62,207,142,.25);border-radius:7px;
+  padding:9px 11px;margin-bottom:11px;display:none}
+.nbox.show{display:block}
+.nbox-t{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:10px;letter-spacing:.8px;
+  text-transform:uppercase;color:var(--green);margin-bottom:3px}
+.nbox p{color:var(--muted2);font-size:10px;line-height:1.6}
+.ddesc{font-size:12px;color:var(--muted2);line-height:1.7;margin-bottom:13px}
+.ddesc.loading{color:var(--muted);font-style:italic}
+.dacts{display:flex;gap:6px;margin-top:11px}
+.da{flex:1;padding:8px 5px;border-radius:8px;font-family:'Rajdhani',sans-serif;font-weight:700;
+  font-size:10px;letter-spacing:.7px;text-transform:uppercase;cursor:pointer;transition:all .15s;
+  text-align:center;border:1px solid;-webkit-tap-highlight-color:transparent}
+.da-add{background:var(--orange);color:#fff;border-color:var(--orange)}
+.da-add:active{background:#e06610}
+.da-rem{background:transparent;color:var(--orange);border-color:var(--orange)}
+.da-notif{background:transparent;color:var(--muted2);border-color:var(--border)}
+.da-notif.on{background:rgba(62,207,142,.1);color:var(--green);border-color:var(--green)}
+
+/* OVERLAY */
+.ov-bg{display:none;position:fixed;inset:0;z-index:190;background:rgba(0,0,0,.5);backdrop-filter:blur(2px)}
+.ov-bg.show{display:block}
+
+/* TOAST */
+.toast{position:fixed;bottom:calc(65px + var(--sb));left:50%;
+  transform:translateX(-50%) translateY(12px);
+  background:var(--card2);border:1px solid var(--border);border-radius:10px;
+  padding:8px 14px;font-size:11.5px;color:var(--text);z-index:500;
+  opacity:0;transition:all .25s;pointer-events:none;
+  display:flex;align-items:center;gap:7px;max-width:90vw}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.success .ti{color:var(--green)}.toast.info .ti{color:var(--orange)}.toast.warn .ti{color:#f5c518}
+
+/* BOTTOM BAR */
+.bar{position:fixed;bottom:0;left:0;right:0;background:rgba(8,8,15,.97);
+  backdrop-filter:blur(18px);border-top:1px solid var(--border);
+  padding:9px 14px calc(9px + var(--sb));
+  display:flex;align-items:center;justify-content:space-between;gap:8px;z-index:100}
+.si2{font-family:'Rajdhani',sans-serif;font-size:13px;color:var(--muted2)}
+.si2 b{color:var(--orange);font-size:20px;font-weight:700}
+.bgrp{display:flex;gap:6px}
+.bgh{background:transparent;border:1px solid var(--border);color:var(--muted2);
+  font-family:'Inter',sans-serif;font-size:11px;padding:7px 11px;border-radius:8px;cursor:pointer}
+.bex{background:var(--orange);color:#fff;border:none;font-family:'Rajdhani',sans-serif;
+  font-weight:700;font-size:12px;letter-spacing:.8px;text-transform:uppercase;
+  padding:8px 16px;border-radius:8px;cursor:pointer;white-space:nowrap}
+.bex:active{background:#e06610}
+.bex:disabled{opacity:.3;cursor:not-allowed}
+
+/* EXPORT MODAL */
+.ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:400;align-items:flex-end;justify-content:center}
+.ov.show{display:flex}
+.mo{background:var(--surface);border-radius:18px 18px 0 0;border:1px solid var(--border);
+  width:100%;max-width:520px;padding:20px 16px calc(16px + var(--sb));max-height:85vh;overflow-y:auto}
+.mo h2{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;margin-bottom:3px}
+.mo h2 em{color:var(--orange);font-style:normal}
+.mo-sub{font-size:11px;color:var(--muted2);line-height:1.5;margin-bottom:12px}
+.sbox{background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:12px 13px;margin-bottom:8px}
+.sbox h3{font-family:'Rajdhani',sans-serif;font-size:11px;font-weight:700;letter-spacing:.8px;
+  text-transform:uppercase;color:var(--orange);margin-bottom:8px}
+.step{display:flex;gap:8px;margin-bottom:6px;font-size:11px;color:var(--muted2);line-height:1.5;align-items:flex-start}
+.step:last-child{margin-bottom:0}
+.snum{width:19px;height:19px;border-radius:50%;background:var(--orange);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Rajdhani',sans-serif;font-weight:700;font-size:10px;flex-shrink:0}
+.step b{color:var(--text)}
+.mo-note{font-size:10px;color:var(--muted);margin-top:8px;line-height:1.5}
+.mcl{width:100%;margin-top:14px;background:var(--card2);border:1px solid var(--border);
+  color:var(--text);font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:600;
+  letter-spacing:1px;padding:10px;border-radius:9px;cursor:pointer}
+
+/* ARCHIVE / PAST SEASONS */
+.archive-chips{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin-bottom:6px}
+.szchip{background:var(--card);border:1px solid var(--border);border-radius:9px;padding:9px 10px;
+  text-align:left;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:border-color .15s}
+.szchip:active{border-color:var(--orange)}
+.szchip .sze{font-size:15px;margin-right:5px}
+.szchip .szl{font-family:'Rajdhani',sans-serif;font-size:12px;font-weight:700;color:var(--text)}
+
+/* ═══════════════════════════════════════════════
+   HISTORY / LIBRARY TAB — all-time watch tracker
+   ═══════════════════════════════════════════════ */
+.lib-toolbar{max-width:1280px;margin:0 auto;padding:9px 12px 0;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.lib-search-wrap{flex:1;min-width:160px;position:relative}
+.lib-search-wrap input{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:8px;
+  color:var(--text);font-size:12px;padding:7px 10px 7px 28px;outline:none;font-family:'Inter',sans-serif;-webkit-appearance:none}
+.lib-search-wrap input:focus{border-color:var(--orange)}
+.lib-search-wrap svg{position:absolute;left:8px;top:50%;transform:translateY(-50%);opacity:.3;pointer-events:none}
+.lib-add-btn{background:var(--orange);color:#fff;border:none;font-family:'Rajdhani',sans-serif;font-weight:700;
+  font-size:11px;letter-spacing:.6px;text-transform:uppercase;padding:8px 12px;border-radius:8px;cursor:pointer;
+  white-space:nowrap;-webkit-tap-highlight-color:transparent}
+.lib-add-btn:active{background:#e06610}
+.lib-search-results{max-width:1280px;margin:0 auto;padding:0 12px}
+.lib-search-results:not(:empty){margin-top:7px}
+.lsr-item{display:flex;gap:9px;align-items:center;background:var(--card);border:1px solid var(--border);
+  border-radius:9px;padding:7px 9px;margin-bottom:6px}
+.lsr-img{width:36px;height:50px;object-fit:cover;border-radius:4px;background:#0e0e18;flex-shrink:0}
+.lsr-info{flex:1;min-width:0}
+.lsr-title{font-size:12px;color:var(--text);font-weight:500;line-height:1.3;
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:1;overflow:hidden}
+.lsr-meta{font-size:9.5px;color:var(--muted2);margin-top:2px}
+.lsr-actions{display:flex;gap:5px;flex-shrink:0}
+.lsr-btn{font-size:9px;font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
+  padding:6px 8px;border-radius:6px;cursor:pointer;border:1px solid var(--border);background:var(--surface);
+  color:var(--muted2);white-space:nowrap;-webkit-tap-highlight-color:transparent}
+.lsr-btn.primary{border-color:var(--orange);color:var(--orange);background:var(--orange2)}
+.lsr-btn:active{opacity:.7}
+
+.lib-filters{display:flex;gap:5px;flex-wrap:wrap;max-width:1280px;margin:9px auto 0;padding:0 12px}
+.lib-fb{font-size:9px;font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.6px;text-transform:uppercase;
+  padding:5px 10px;border-radius:8px;cursor:pointer;border:1px solid var(--border);background:var(--surface);
+  color:var(--muted2);-webkit-tap-highlight-color:transparent}
+.lib-fb.on{border-color:var(--orange);color:var(--orange);background:var(--orange2)}
+.lib-select{font-size:9px;font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.6px;text-transform:uppercase;
+  padding:5px 8px;border-radius:8px;cursor:pointer;border:1px solid var(--border);background:var(--surface);
+  color:var(--muted2);-webkit-tap-highlight-color:transparent;-webkit-appearance:none;appearance:none}
+.lib-select:focus{border-color:var(--orange);color:var(--orange)}
+
+.stats-wrap{padding:14px 0 4px}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:16px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:11px 12px}
+.stat-num{font-family:'Rajdhani',sans-serif;font-weight:700;font-size:22px;color:var(--orange);line-height:1}
+.stat-label{font-size:9px;color:var(--muted2);margin-top:4px;text-transform:uppercase;letter-spacing:.7px;
+  font-family:'Rajdhani',sans-serif;font-weight:600}
+.stat-card.purple .stat-num{color:var(--purple)}
+.stat-card.green .stat-num{color:var(--green)}
+
+.bd-section{margin-bottom:16px}
+.bd-title{font-family:'Rajdhani',sans-serif;font-size:10px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;
+  color:var(--muted);border-bottom:1px solid var(--border);padding-bottom:6px;margin-bottom:9px}
+.bd-genres{display:flex;flex-wrap:wrap;gap:6px}
+.genre-chip{display:flex;align-items:center;gap:5px;background:var(--card2);border:1px solid var(--border);
+  border-radius:20px;padding:4px 10px;font-size:10px;color:var(--muted2)}
+.genre-chip b{color:var(--text);font-weight:600}
+.bd-years{display:flex;flex-direction:column;gap:5px}
+.yr-row{display:flex;align-items:center;gap:8px;font-size:10.5px;color:var(--muted2)}
+.yr-label{width:38px;flex-shrink:0;color:var(--text);font-family:'Rajdhani',sans-serif;font-weight:600}
+.yr-track{flex:1;height:7px;background:var(--border);border-radius:4px;overflow:hidden}
+.yr-fill{height:100%;background:linear-gradient(90deg,var(--purple),var(--orange));border-radius:4px}
+.yr-count{width:22px;text-align:right;flex-shrink:0;color:var(--text)}
+
+.lib-list{display:flex;flex-direction:column;gap:8px}
+.lib-entry{display:flex;gap:10px;background:var(--card);border:1px solid var(--border);border-radius:11px;
+  padding:9px;position:relative}
+.le-img{width:52px;height:73px;object-fit:cover;border-radius:6px;background:#0e0e18;flex-shrink:0}
+.le-img-ph{width:52px;height:73px;border-radius:6px;background:#0e0e18;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:20px}
+.le-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;justify-content:center}
+.le-title{font-size:12.5px;font-weight:600;color:var(--text);line-height:1.3;
+  display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:1;overflow:hidden;padding-right:20px}
+.le-meta{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+.le-status{font-size:8px;font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.6px;text-transform:uppercase;
+  padding:2px 6px;border-radius:4px;border:1px solid}
+.le-status.watching{color:var(--hd);border-color:rgba(0,180,216,.35);background:rgba(0,180,216,.08)}
+.le-status.completed{color:var(--green);border-color:rgba(62,207,142,.35);background:rgba(62,207,142,.08)}
+.le-status.planning{color:var(--purple);border-color:rgba(124,82,217,.35);background:rgba(124,82,217,.08)}
+.le-status.dropped{color:var(--nf);border-color:rgba(229,9,20,.35);background:rgba(229,9,20,.08)}
+.le-status.paused{color:#f5c518;border-color:rgba(245,197,24,.35);background:rgba(245,197,24,.08)}
+.le-eps{font-size:10px;color:var(--muted2)}
+.le-eps b{color:var(--text)}
+.le-score{font-size:10px;color:#f5c518}
+.le-progress{height:4px;background:var(--border);border-radius:2px;overflow:hidden;margin-top:2px}
+.le-progress-fill{height:100%;background:linear-gradient(90deg,var(--orange),#f5a623);border-radius:2px}
+.le-edit{position:absolute;top:8px;right:8px;width:22px;height:22px;border-radius:50%;background:rgba(8,8,15,.75);
+  border:1px solid var(--border);color:var(--muted2);font-size:10px;cursor:pointer;display:flex;align-items:center;
+  justify-content:center;-webkit-tap-highlight-color:transparent}
+
+.lib-empty{text-align:center;padding:50px 20px 30px;color:var(--muted)}
+.lib-empty .mle-ico{font-size:44px;margin-bottom:12px}
+.lib-empty p{font-size:12.5px;line-height:1.8;color:var(--muted2)}
+.lib-empty b{color:var(--orange)}
+
+.lf-row{margin-bottom:11px}
+.lf-label{font-size:9.5px;font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.8px;text-transform:uppercase;
+  color:var(--muted2);margin-bottom:5px;display:block}
+.lf-row input[type=text],.lf-row input[type=number]{width:100%;background:var(--card2);border:1px solid var(--border);
+  border-radius:8px;color:var(--text);font-size:13px;padding:8px 10px;outline:none;font-family:'Inter',sans-serif;
+  -webkit-appearance:none}
+.lf-row input:focus{border-color:var(--orange)}
+.lf-row input[readonly]{opacity:.65}
+.lf-2col{display:flex;gap:8px}
+.lf-2col>div{flex:1}
+.lf-status-grp,.lf-genre-grp{display:flex;gap:5px;flex-wrap:wrap}
+.lf-status-opt{font-size:9.5px;font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
+  padding:6px 10px;border-radius:7px;cursor:pointer;border:1px solid var(--border);background:var(--card2);
+  color:var(--muted2);-webkit-tap-highlight-color:transparent}
+.lf-status-opt.on{border-color:var(--orange);color:var(--orange);background:var(--orange2)}
+.lf-genre-opt{font-size:9px;font-family:'Rajdhani',sans-serif;font-weight:600;letter-spacing:.4px;padding:4px 9px;
+  border-radius:20px;cursor:pointer;border:1px solid var(--border);background:var(--card2);color:var(--muted2);
+  -webkit-tap-highlight-color:transparent}
+.lf-genre-opt.on{border-color:var(--purple);color:var(--purple);background:rgba(124,82,217,.1)}
+.lf-actions{display:flex;gap:8px;margin-top:14px}
+.lf-btn{flex:1;padding:10px 5px;border-radius:9px;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:11px;
+  letter-spacing:.7px;text-transform:uppercase;cursor:pointer;border:1px solid;text-align:center;
+  -webkit-tap-highlight-color:transparent}
+.lf-btn-save{background:var(--orange);color:#fff;border-color:var(--orange)}
+.lf-btn-del{background:transparent;color:var(--nf);border-color:var(--nf);flex:.7}
+.lf-btn-cancel{background:transparent;color:var(--muted2);border-color:var(--border);flex:.7}
+
+/* ═══════════════════════════════════════════════
+   IDENTIFY FROM SCREENSHOT (on-device OCR + AniList)
+   ═══════════════════════════════════════════════ */
+.id-panel{max-width:1280px;margin:9px auto 0;padding:0 12px}
+.id-dropzone{border:2px dashed var(--border);border-radius:12px;padding:18px 14px;text-align:center;
+  color:var(--muted2);font-size:12px;line-height:1.6;cursor:pointer;transition:border-color .15s,background .15s;
+  -webkit-tap-highlight-color:transparent}
+.id-dropzone:active{border-color:var(--orange);background:var(--orange2)}
+.id-dropzone b{color:var(--orange)}
+.id-dropzone.drag{border-color:var(--orange);background:var(--orange2)}
+.id-results{max-width:1280px;margin:0 auto;padding:0 12px;display:flex;flex-direction:column;gap:8px}
+.id-results:not(:empty){margin-top:9px}
+.id-card{display:flex;gap:10px;background:var(--card);border:1px solid var(--border);border-radius:11px;padding:9px;position:relative}
+.id-close{position:absolute;top:6px;right:6px;width:20px;height:20px;border-radius:50%;
+  background:rgba(8,8,15,.65);border:1px solid var(--border);color:var(--muted2);
+  display:flex;align-items:center;justify-content:center;font-size:11px;line-height:1;
+  cursor:pointer;-webkit-tap-highlight-color:transparent;z-index:2;padding:0}
+.id-close:active{background:var(--nf);border-color:var(--nf);color:#fff}
+.id-thumb{width:64px;height:64px;object-fit:cover;border-radius:8px;flex-shrink:0;background:#0e0e18}
+.id-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px;justify-content:center;padding-right:24px}
+.id-status{font-size:11px;color:var(--muted2);display:flex;align-items:center;gap:7px}
+.id-status.err{color:#f5c518}
+.id-status .lspin{width:10px;height:10px;border-width:2px}
+.id-title{font-size:12.5px;font-weight:600;color:var(--text);line-height:1.3}
+.id-conf{font-size:9px;font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.6px;text-transform:uppercase;
+  display:inline-block;width:fit-content;padding:1px 6px;border-radius:4px;border:1px solid}
+.id-conf.high{color:var(--green);border-color:rgba(62,207,142,.35);background:rgba(62,207,142,.08)}
+.id-conf.mid{color:#f5c518;border-color:rgba(245,197,24,.35);background:rgba(245,197,24,.08)}
+.id-conf.low{color:var(--muted2);border-color:var(--border);background:transparent}
+.id-ep{font-size:10.5px;color:var(--muted2)}
+.id-ep b{color:var(--text)}
+.id-actions{display:flex;gap:5px;flex-wrap:wrap;margin-top:2px}
+.id-btn{font-size:9px;font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.5px;text-transform:uppercase;
+  padding:5px 8px;border-radius:6px;cursor:pointer;border:1px solid var(--border);background:var(--surface);
+  color:var(--muted2);-webkit-tap-highlight-color:transparent;white-space:nowrap}
+.id-btn.watch{border-color:var(--hd);color:var(--hd)}
+.id-btn.done{border-color:var(--green);color:var(--green)}
+.id-btn.drop{border-color:var(--nf);color:var(--nf)}
+.id-btn:active{opacity:.7}
+.id-added{font-size:10px;color:var(--green);font-family:'Rajdhani',sans-serif;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+
+@media(max-width:600px){:root{--dw:100vw}.page.drawer-open{margin-right:0}}
+</style>
+</head>
+<body>
+
+<div class="ib" id="ib">
+  <div style="font-size:20px;flex-shrink:0">📲</div>
+  <div class="ib-t"><b>Install as App</b> — Tap <b>Share ↑</b> then <b>Add to Home Screen</b></div>
+  <button class="ib-x" onclick="localStorage.setItem('ib','1');this.parentNode.classList.remove('show')">✕</button>
+</div>
+
+<header>
+  <div class="hi">
+    <div class="hl">
+      <div class="sbadge" id="seasonBadge">Loading season…</div>
+      <h1>My <em>Anime</em> Companion</h1>
+      <p id="hSub">Loading…</p>
+      <p id="dbgLine" style="font-size:8px;color:var(--muted);margin-top:2px;font-family:monospace"></p>
+    </div>
+    <div class="hbtns">
+      <button class="hbtn" id="notifBtn" onclick="toggleNotif()">
+        <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"/></svg>
+        <span id="nlabel">Notify Me</span>
+      </button>
+      <button class="hbtn" id="syncBtn" onclick="openSyncModal()">
+        <span class="udot" id="syncDot"></span>
+        <span id="syncLabel">Sync</span>
+      </button>
+      <button class="hbtn" id="archiveBtn" onclick="openArchive()">
+        <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 4h16v4H4zM5 8v12h14V8M9 12h6"/></svg>
+        <span>Seasons</span>
+      </button>
+      <button class="hbtn" id="upBtn" onclick="doUpdate()">
+        <span class="udot"></span>
+        <svg id="upIcon" width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+        <span id="ulabel">Update</span>
+      </button>
+    </div>
+  </div>
+  <!-- TABS -->
+  <div class="tabs">
+    <div class="tab on" id="tab-browse" onclick="switchTab('browse')">
+      <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+      Browse
+    </div>
+    <div class="tab" id="tab-mylist" onclick="switchTab('mylist')">
+      <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M5 3l14 9-14 9V3z"/></svg>
+      My List
+      <span class="tab-badge" id="myListBadge" style="display:none">0</span>
+    </div>
+    <div class="tab" id="tab-progression" onclick="switchTab('progression')">
+      <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 20h18M6 20V10M12 20V4M18 20v-7"/></svg>
+      Progression
+    </div>
+    <div class="tab" id="tab-library" onclick="switchTab('library')">
+      <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 8v4l2.5 2.5M12 3a9 9 0 100 18 9 9 0 000-18z"/></svg>
+      History
+    </div>
+    <div class="tab" id="tab-recs" onclick="switchTab('recs')">
+      <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>
+      For You
+    </div>
+  </div>
+</header>
+
+<!-- BROWSE toolbar -->
+<div id="browseTools" class="toolbar">
+  <div class="sw">
+    <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+    <input id="srch" type="text" placeholder="Search anime…" oninput="renderBrowse()">
+  </div>
+  <button class="fb on" onclick="setF('all',this)">All</button>
+  <button class="fb" onclick="setF('new',this)">New</button>
+  <button class="fb" onclick="setF('cont',this)">On Air</button>
+  <button class="fb" onclick="setF('dub',this)">Dub</button>
+  <button class="fb" onclick="setF('cr',this)">CR</button>
+  <button class="fb" onclick="setF('nf',this)">Netflix</button>
+  <button class="fb" onclick="setF('hd',this)">HIDIVE</button>
+</div>
+
+<div class="statusbar" id="browseStatus">
+  <div class="stat"><b id="sc2">0</b> shows</div>
+  <div class="stat" style="color:var(--muted)">·</div>
+  <div class="stat"><b id="selc2">0</b> selected</div>
+  <div class="stat" id="upSep" style="display:none;color:var(--muted)">·</div>
+  <div class="stat" id="upLabel" style="display:none"></div>
+</div>
+
+<div class="lbanner" id="lbanner">
+  <div class="lspin"></div>
+  <span id="ltxt">Loading covers…</span>
+  <div class="ltrack"><div class="lprog" id="lprog"></div></div>
+</div>
+
+<!-- HISTORY/LIBRARY toolbar -->
+<div id="libraryTools" class="lib-toolbar" style="display:none">
+  <div class="lib-search-wrap">
+    <svg width="11" height="11" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+    <input id="libSearch" type="text" placeholder="Search any anime ever made…" oninput="onLibSearchInput()">
+  </div>
+  <button class="lib-add-btn" onclick="openLibModal()">+ Add Manually</button>
+</div>
+<div class="id-panel" id="idPanel" style="display:none">
+  <div class="id-dropzone" id="idDropzone" onclick="document.getElementById('idFileInput').click()"
+    ondragover="event.preventDefault();this.classList.add('drag')"
+    ondragleave="this.classList.remove('drag')"
+    ondrop="event.preventDefault();this.classList.remove('drag');handleImageFiles(event.dataTransfer.files)">
+    📷 <b>Tap to upload screenshot(s)</b> from Crunchyroll, Google, etc. — I'll read every title in the image (lists work too) and match each one.
+    <input type="file" id="idFileInput" accept="image/*" multiple style="display:none" onchange="handleImageFiles(this.files)">
+  </div>
+  <div class="id-results" id="idResults"></div>
+</div>
+<div id="libSearchResults" class="lib-search-results"></div>
+<div id="libraryFilters" class="lib-filters" style="display:none">
+  <button class="lib-fb on" data-f="all" onclick="setLibFilter('all',this)">All</button>
+  <button class="lib-fb" data-f="watching" onclick="setLibFilter('watching',this)">Watching</button>
+  <button class="lib-fb" data-f="completed" onclick="setLibFilter('completed',this)">Completed</button>
+  <button class="lib-fb" data-f="planning" onclick="setLibFilter('planning',this)">Planning</button>
+  <button class="lib-fb" data-f="paused" onclick="setLibFilter('paused',this)">Paused</button>
+  <button class="lib-fb" data-f="dropped" onclick="setLibFilter('dropped',this)">Dropped</button>
+</div>
+<div id="libraryFilters2" class="lib-filters" style="display:none">
+  <select id="libFmtSel" class="lib-select" onchange="setLibFormat(this.value)"><option value="all">All Types</option></select>
+  <select id="libYearSel" class="lib-select" onchange="setLibYear(this.value)"><option value="all">All Years</option></select>
+</div>
+<div id="libraryGenreFilters" class="lib-filters" style="display:none"></div>
+
+<!-- FOR YOU / RECOMMENDATIONS toolbar -->
+<div id="recsTools" class="toolbar" style="display:none">
+  <div class="stat" style="flex:1" id="recsSub">Fresh picks from AniList</div>
+  <button class="fb" id="recsRefreshBtn" onclick="loadRecs(true)">↻ Refresh</button>
+</div>
+<div class="lbanner" id="recsBanner" style="display:none">
+  <div class="lspin"></div>
+  <span>Finding shows for you…</span>
+</div>
+
+<div class="page" id="page">
+  <!-- BROWSE VIEW -->
+  <div class="pview on" id="view-browse"></div>
+
+  <!-- PROGRESSION VIEW (stats only) -->
+  <div class="pview" id="view-progression"></div>
+
+  <!-- HISTORY / LIBRARY VIEW (entries list only) -->
+  <div class="pview" id="view-library"></div>
+
+  <!-- FOR YOU / RECOMMENDATIONS VIEW -->
+  <div class="pview" id="view-recs"></div>
+
+  <!-- MY LIST VIEW -->
+  <div class="pview" id="view-mylist">
+    <div class="mylist-header">
+      <div class="mylist-title">⏱ Countdown to next episode</div>
+      <div class="mylist-sort">
+        <button class="msort-btn on" id="ms-next" onclick="setMSort('next',this)">⏰ Soonest</button>
+        <button class="msort-btn" id="ms-alpha" onclick="setMSort('alpha',this)">A–Z</button>
+        <button class="msort-btn" id="ms-plat" onclick="setMSort('plat',this)">Platform</button>
+      </div>
+    </div>
+    <div id="mylist-content"></div>
+  </div>
+</div>
+
+<!-- DRAWER -->
+<div class="ov-bg" id="ovBg" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <button class="dclose" onclick="closeDrawer()">✕</button>
+  <div class="dpl" id="dpl"></div>
+  <div id="diw" class="diw" style="display:none"><img id="dimg" src="" alt=""></div>
+  <div id="dph" class="dph">🎌</div>
+  <div class="dbody">
+    <div class="dtitle" id="dtitle"></div>
+    <div class="dmeta" id="dmeta"></div>
+    <div class="dinfo" id="dinfo"></div>
+    <div class="nbox" id="nbox"><div class="nbox-t">🔔 Notifications Active</div><p id="nboxMsg"></p></div>
+    <div class="ddesc" id="ddesc">Loading…</div>
+    <div class="dacts">
+      <button class="da da-add" id="daAdd" onclick="drawerToggleSel()">Add to My List</button>
+      <button class="da da-notif" id="daNot" onclick="drawerToggleNotif()">🔔 Notify</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="ti" id="ti">✓</span><span id="tm"></span></div>
+
+<div class="bar" id="bottomBar">
+  <div class="si2"><b id="selc">0</b> in My List</div>
+  <div class="bgrp">
+    <button class="bgh" onclick="selAll()">Select All</button>
+    <button class="bex" id="ebtn" onclick="doExport()" disabled>Export .ics</button>
+  </div>
+</div>
+
+<!-- HISTORY add/edit modal -->
+<div class="ov" id="libModal" onclick="if(event.target===this)closeLibModal()">
+  <div class="mo">
+    <h2 id="libModalTitle">Add to <em>History</em></h2>
+    <p class="mo-sub">Track anything you've ever watched — search or fill it in yourself.</p>
+    <div class="lf-row">
+      <label class="lf-label">Title</label>
+      <input type="text" id="lfTitle" placeholder="e.g. Fullmetal Alchemist: Brotherhood">
+    </div>
+    <div class="lf-2col">
+      <div class="lf-row"><label class="lf-label">Total Episodes</label><input type="number" id="lfEpTotal" min="0" placeholder="?"></div>
+      <div class="lf-row"><label class="lf-label">Episodes Watched</label><input type="number" id="lfEpWatched" min="0" placeholder="0"></div>
+    </div>
+    <div class="lf-2col">
+      <div class="lf-row"><label class="lf-label">Year</label><input type="number" id="lfYear" placeholder="e.g. 2009"></div>
+      <div class="lf-row"><label class="lf-label">Score (1–10)</label><input type="number" id="lfScore" min="1" max="10" placeholder="—"></div>
+    </div>
+    <div class="lf-row">
+      <label class="lf-label">Status</label>
+      <div class="lf-status-grp" id="lfStatusGrp">
+        <div class="lf-status-opt" data-s="watching" onclick="setLfStatus('watching')">Watching</div>
+        <div class="lf-status-opt" data-s="completed" onclick="setLfStatus('completed')">Completed</div>
+        <div class="lf-status-opt" data-s="planning" onclick="setLfStatus('planning')">Planning</div>
+        <div class="lf-status-opt" data-s="paused" onclick="setLfStatus('paused')">Paused</div>
+        <div class="lf-status-opt" data-s="dropped" onclick="setLfStatus('dropped')">Dropped</div>
+      </div>
+    </div>
+    <div class="lf-row">
+      <label class="lf-label">Genres</label>
+      <div class="lf-genre-grp" id="lfGenreGrp"></div>
+    </div>
+    <div class="lf-actions">
+      <button class="lf-btn lf-btn-cancel" onclick="closeLibModal()">Cancel</button>
+      <button class="lf-btn lf-btn-del" id="lfDeleteBtn" style="display:none" onclick="deleteLibEntryFromModal()">Delete</button>
+      <button class="lf-btn lf-btn-save" onclick="saveLibEntry()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="ov" id="modal" onclick="if(event.target===this)this.classList.remove('show')">
+  <div class="mo">
+    <h2>📅 Export to <em>Apple Calendar</em></h2>
+    <p class="mo-sub">Downloaded with real airtimes + 30-min alerts built in:</p>
+    <div class="sbox">
+      <h3>📱 iPhone iOS 18+</h3>
+      <div class="step"><div class="snum">1</div><div>Open <b>Files app</b> → Downloads → <b id="modalFname">anime-calendar.ics</b></div></div>
+      <div class="step"><div class="snum">2</div><div>Press and <b>hold</b> the file with one finger</div></div>
+      <div class="step"><div class="snum">3</div><div>With another finger, open <b>Calendar</b> from the Dock</div></div>
+      <div class="step"><div class="snum">4</div><div><b>Drop</b> it onto Calendar — imports automatically</div></div>
+    </div>
+    <div class="sbox">
+      <h3>💻 Mac</h3>
+      <div class="step"><div class="snum">1</div><div><b>Double-click</b> the .ics — Calendar imports instantly</div></div>
+    </div>
+    <p class="mo-note">⏰ Each event repeats weekly with a built-in 30-min alert.</p>
+    <button class="mcl" onclick="document.getElementById('modal').classList.remove('show')">Got it ✓</button>
+  </div>
+</div>
+
+<div class="ov" id="archiveModal" onclick="if(event.target===this)closeArchive()">
+  <div class="mo" style="max-height:88vh">
+    <h2 id="archiveTitle">📚 Past <em>Seasons</em></h2>
+    <p class="mo-sub" id="archiveSub">Every anime season, archived. Pick one to browse.</p>
+    <div id="archiveBackRow" style="display:none;margin-bottom:8px">
+      <button class="fb" onclick="showArchiveChips()">← All Seasons</button>
+    </div>
+    <div id="archiveChips" class="archive-chips"></div>
+    <div class="lbanner" id="archiveLoading" style="display:none;padding:14px 0">
+      <div class="lspin"></div><span>Loading season…</span>
+    </div>
+    <div id="archiveResults" class="lib-search-results" style="padding:0;margin-top:4px"></div>
+    <button class="mcl" onclick="closeArchive()">Close</button>
+  </div>
+</div>
+
+<div class="ov" id="syncModal" onclick="if(event.target===this)closeSyncModal()">
+  <div class="mo">
+    <h2>☁️ Cloud <em>Sync</em></h2>
+    <p class="mo-sub">Your selections and history follow this code to any device or URL. Use the same code everywhere to keep them linked.</p>
+    <div id="syncConfigWarn" style="display:none;background:var(--orange2);border:1px solid var(--orange);border-radius:8px;padding:8px 10px;font-size:11px;color:var(--orange);margin-bottom:10px">
+      Sync isn't configured yet — missing Supabase URL/key in the code.
+    </div>
+    <div class="step"><div class="snum">1</div><div>
+      <input id="syncCodeInput" type="text" spellcheck="false" autocapitalize="off"
+        style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:8px;
+        color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px;padding:9px 10px;letter-spacing:1px">
+    </div></div>
+    <div class="step"><div class="snum">2</div><div>Tap <b>Copy</b> and save this code somewhere safe (or type in a code from another device to link it).</div></div>
+    <div style="display:flex;gap:8px;margin-top:6px">
+      <button class="fb" style="flex:1" onclick="copySyncCode()">📋 Copy Code</button>
+      <button class="fb" style="flex:1" onclick="applySyncCode()">☁️ Use This Code</button>
+    </div>
+    <button class="mcl" onclick="closeSyncModal()">Close</button>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════════════════════
+   DATA — loaded dynamically from AniList for the current season.
+   ANIME starts empty and is populated by loadSeasonData() at boot.
+   Once a season ends, the app automatically rolls over to the next
+   one (Winter → Spring → Summer → Fall → Winter…) and refetches.
+   utc = airtime in UTC
+══════════════════════════════════════════════ */
+var MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+var PL={cr:'Crunchyroll',nf:'Netflix',hd:'HIDIVE',hv:'Hulu'};
+var PL_ICON={cr:'🍊',nf:'📺',hd:'🎌',hv:'🎬'};
+var ANIME=[];
+
+/* ══════ SEASON ENGINE ══════
+   Figures out the current anime season from today's date and can
+   step forward to the next one indefinitely. */
+var SEASON_ORDER=['WINTER','SPRING','SUMMER','FALL'];
+var SEASON_NAME={WINTER:'Winter',SPRING:'Spring',SUMMER:'Summer',FALL:'Fall'};
+var SEASON_EMOJI={WINTER:'❄️',SPRING:'🌸',SUMMER:'🌞',FALL:'🍂'};
+var SEASON_START_MONTH={WINTER:0,SPRING:3,SUMMER:6,FALL:9}; // 0-indexed
+var CUR_SEASON=null,CUR_YEAR=null; // set by loadSeasonData()
+var SCK='ac_season_cache_v1'; // cached season data (anime + covers)
+function seasonForDate(d){
+  var m=d.getMonth();
+  var season=m<3?'WINTER':m<6?'SPRING':m<9?'SUMMER':'FALL';
+  return{season:season,year:d.getFullYear()};
+}
+function nextSeason(season,year){
+  var idx=SEASON_ORDER.indexOf(season);
+  return idx===3?{season:'WINTER',year:year+1}:{season:SEASON_ORDER[idx+1],year:year};
+}
+function seasonKeyOf(season,year){return season+'-'+year;}
+function seasonLabel(season,year){return SEASON_NAME[season]+' '+year;}
+function seasonRange(season,year){
+  var sm=SEASON_START_MONTH[season];
+  var start=new Date(Date.UTC(year,sm,1));
+  var end=new Date(Date.UTC(year,sm+3,0,23,59,59)); // last moment of the season
+  function ds(d){return d.getUTCFullYear()+''+p2(d.getUTCMonth()+1)+''+p2(d.getUTCDate());}
+  return{start:start,end:end,startDs:ds(start),endDs:ds(end)};
+}
+
+/* ══════ STATE ══════ */
+var sel={},filt='all',covers={},descCache={},activeId=null,notifOn=false,ntimers={};
+var curTab='browse', msort='next';
+var SK='ac_v7',NK='ac_notifs_v7',CK='ac_covers_v4';
+var cdInterval=null; // ticker for countdowns
+
+/* ══════ HISTORY / LIBRARY STATE (all-time watch tracker) ══════ */
+var lib={},libFilter='all',libFormat='all',libYear='all',libGenre='all',libEditKey=null,lfStatus='watching',lfGenres=[];
+var recsLoadedOnce=false,recsGroups=[],recsCache={};
+var libSearchTimer=null,libSearchCache={},libPendingAnilist=null;
+var LK='ac_library_v1';
+var GENRES=['Action','Adventure','Comedy','Drama','Ecchi','Fantasy','Horror','Mahou Shoujo','Mecha','Music','Mystery','Psychological','Romance','Sci-Fi','Slice of Life','Sports','Supernatural','Thriller'];
+
+/* ══════ CLOUD SYNC (Supabase) ══════
+   Fill these in after creating your Supabase project + table (see setup
+   notes). Leave them as-is and sync just stays off — everything still
+   works locally via localStorage, it just won't follow you across
+   devices/redeploys until these are set. */
+var SUPA_URL='https://tkhifrnkezzwfqrcnyvw.supabase.co';       // e.g. https://xxxxxxxx.supabase.co
+var SUPA_KEY='sb_publishable_lgz6NtAaUp78yH2OLi0CaA_eQvsws6n';  // the "anon public" key from Settings → API
+var SYNC_ENABLED=SUPA_URL.indexOf('YOUR_')!==0&&SUPA_KEY.indexOf('YOUR_')!==0;
+var SYNCK='ac_sync_code_v1';
+var syncCode=null,syncTimer=null,syncBusy=false,syncStatus='off'; // off|synced|syncing|error|unconfigured
+function getSyncCode(){try{return localStorage.getItem(SYNCK)||null;}catch(e){return null;}}
+function setSyncCodeLocal(code){syncCode=code;try{localStorage.setItem(SYNCK,code);}catch(e){}}
+function ensureSyncCode(){
+  var c=getSyncCode();
+  if(!c){c=Math.random().toString(36).slice(2,6)+Math.random().toString(36).slice(2,6);setSyncCodeLocal(c);}
+  syncCode=c;return c;
+}
+function scheduleSync(){
+  if(!SYNC_ENABLED||!syncCode)return;
+  clearTimeout(syncTimer);
+  setSyncStatus('syncing');
+  syncTimer=setTimeout(pushSync,2500);
+}
+function pushSync(){
+  if(!SYNC_ENABLED||!syncCode)return;
+  var payload={sel:sel,lib:lib,notifs:getSN(),msort:msort,filt:filt};
+  fetch(SUPA_URL+'/rest/v1/anime_state',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY,'Prefer':'resolution=merge-duplicates'},
+    body:JSON.stringify([{id:syncCode,data:payload,updated_at:new Date().toISOString()}])
+  }).then(function(r){setSyncStatus(r.ok?'synced':'error');})
+  .catch(function(){setSyncStatus('error');});
+}
+function pullSync(cb){
+  if(!SYNC_ENABLED||!syncCode){cb&&cb(false);return;}
+  setSyncStatus('syncing');
+  fetch(SUPA_URL+'/rest/v1/anime_state?id=eq.'+encodeURIComponent(syncCode)+'&select=data,updated_at',{
+    headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}
+  }).then(function(r){return r.json();})
+  .then(function(rows){
+    if(rows&&rows[0]&&rows[0].data){
+      var d=rows[0].data;
+      if(d.sel)sel=d.sel;
+      if(d.lib)lib=d.lib;
+      if(d.notifs){try{localStorage.setItem(NK,JSON.stringify(d.notifs));}catch(e){}}
+      if(d.msort)msort=d.msort;
+      if(d.filt)filt=d.filt;
+      try{localStorage.setItem(SK,JSON.stringify({sel:sel}));localStorage.setItem(LK,JSON.stringify(lib));}catch(e){}
+      setSyncStatus('synced');cb&&cb(true);
+    }else{setSyncStatus('synced');cb&&cb(false);}
+  }).catch(function(){setSyncStatus('error');cb&&cb(false);});
+}
+function setSyncStatus(s){
+  syncStatus=s;
+  var dot=document.getElementById('syncDot'),lbl=document.getElementById('syncLabel');
+  if(!dot)return;
+  dot.className='udot sync-'+s;
+  if(lbl)lbl.textContent=s==='synced'?'Synced':s==='syncing'?'Syncing…':s==='error'?'Sync error':'Sync';
+}
+function openSyncModal(){
+  document.getElementById('syncCodeInput').value=syncCode||'';
+  document.getElementById('syncConfigWarn').style.display=SYNC_ENABLED?'none':'';
+  document.getElementById('syncModal').classList.add('show');
+}
+function closeSyncModal(){document.getElementById('syncModal').classList.remove('show');}
+function copySyncCode(){
+  var inp=document.getElementById('syncCodeInput');inp.select();inp.setSelectionRange(0,999);
+  try{document.execCommand('copy');showToast('Sync code copied','success','✓');}catch(e){showToast('Long-press to copy','info','ℹ');}
+}
+function applySyncCode(){
+  var v=document.getElementById('syncCodeInput').value.trim();
+  if(!v){showToast('Enter a sync code first','warn','⚠');return;}
+  setSyncCodeLocal(v);
+  pullSync(function(applied){
+    renderBrowse();updateBar();
+    if(curTab==='library')renderLibrary();
+    closeSyncModal();
+    showToast(applied?'Synced from cloud ✓':'No data found for this code yet — will push on next change','info','☁');
+  });
+}
+
+/* ══════ ICON ══════ */
+function generateIcon(){
+  try{
+    var c=document.createElement('canvas');c.width=512;c.height=512;
+    var ctx=c.getContext('2d');
+    var bg=ctx.createLinearGradient(0,0,512,512);
+    bg.addColorStop(0,'#1a0a2e');bg.addColorStop(1,'#08080f');
+    ctx.fillStyle=bg;
+    rrect(ctx,0,0,512,512,100);ctx.fill();
+
+    var lx=68,rx=444,my=262;
+    // eye outline path (almond shape), reused for sclera fill + clip
+    function eyePath(){
+      ctx.beginPath();
+      ctx.moveTo(lx,my);
+      ctx.quadraticCurveTo(256,132,rx,my);
+      ctx.quadraticCurveTo(256,336,lx,my);
+      ctx.closePath();
+    }
+    eyePath();ctx.fillStyle='#f6f1ff';ctx.fill();
+
+    ctx.save();eyePath();ctx.clip();
+    // iris
+    var irisR=142;
+    var irisGrad=ctx.createRadialGradient(256,my-10,10,256,my,irisR);
+    irisGrad.addColorStop(0,'#ffb066');
+    irisGrad.addColorStop(0.55,'#f47521');
+    irisGrad.addColorStop(1,'#7c3fd9');
+    ctx.beginPath();ctx.arc(256,my,irisR,0,Math.PI*2);ctx.fillStyle=irisGrad;ctx.fill();
+    // radial streaks in iris
+    ctx.strokeStyle='rgba(255,255,255,.16)';ctx.lineWidth=4;
+    for(var a=0;a<Math.PI*2;a+=Math.PI/6){
+      ctx.beginPath();
+      ctx.moveTo(256+Math.cos(a)*60,my+Math.sin(a)*60);
+      ctx.lineTo(256+Math.cos(a)*134,my+Math.sin(a)*134);
+      ctx.stroke();
+    }
+    // pupil
+    ctx.beginPath();ctx.arc(256,my,52,0,Math.PI*2);ctx.fillStyle='#140a20';ctx.fill();
+    // anime-style highlights
+    ctx.fillStyle='#ffffff';
+    ctx.beginPath();ctx.ellipse(214,my-44,28,34,-.3,0,Math.PI*2);ctx.fill();
+    ctx.beginPath();ctx.arc(304,my+42,15,0,Math.PI*2);ctx.fill();
+    // soft under-eye shade
+    var shade=ctx.createLinearGradient(0,my+40,0,my+90);
+    shade.addColorStop(0,'rgba(20,10,32,0)');shade.addColorStop(1,'rgba(20,10,32,.28)');
+    ctx.fillStyle=shade;ctx.fillRect(lx,my+30,rx-lx,70);
+    ctx.restore();
+
+    // bold eyelid line (upper)
+    ctx.beginPath();ctx.moveTo(lx,my);ctx.quadraticCurveTo(256,132,rx,my);
+    ctx.lineWidth=22;ctx.lineCap='round';ctx.lineJoin='round';ctx.strokeStyle='#f6f1ff';ctx.stroke();
+    // lower lid, softer
+    ctx.beginPath();ctx.moveTo(lx+16,my+8);ctx.quadraticCurveTo(256,322,rx-16,my+8);
+    ctx.lineWidth=8;ctx.strokeStyle='rgba(246,241,255,.4)';ctx.stroke();
+    // lashes flicking up from outer corner
+    ctx.strokeStyle='#f6f1ff';ctx.lineWidth=15;ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(rx-8,my-6);ctx.lineTo(rx+36,my-50);ctx.stroke();
+    ctx.beginPath();ctx.moveTo(rx-34,my-42);ctx.lineTo(rx-2,my-82);ctx.stroke();
+
+    var u=c.toDataURL('image/png');
+    document.getElementById('appIcon').href=u;
+    var fl=document.createElement('link');fl.rel='icon';fl.href=u;document.head.appendChild(fl);
+  }catch(e){}
+}
+function rrect(ctx,x,y,w,h,r){
+  ctx.beginPath();ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);ctx.closePath();
+}
+
+/* ══════ SERVICE WORKER (background notifications) ══════ */
+var SW_CODE=`self.addEventListener('install',e=>self.skipWaiting());
+self.addEventListener('activate',e=>e.waitUntil(clients.claim()));
+self.addEventListener('message',e=>{
+  if(!e.data)return;
+  if(e.data.type==='SCHEDULE'){
+    e.data.shows.forEach(function(s){
+      var ms=s.notifyAt-Date.now();
+      if(ms>0&&ms<7*24*60*60*1000)setTimeout(function(){
+        self.registration.showNotification('🔔 Airing in 30 min!',{
+          body:s.title+'\\nEp '+s.ep+' · '+s.pl+'  '+s.lt,
+          tag:'ac-'+s.id+'-ep'+s.ep,requireInteraction:false
+        });
+      },ms);
+    });
+  }
+  if(e.data.type==='TEST'){
+    setTimeout(function(){
+      self.registration.showNotification('🔔 Anime Companion — Notifications Active',{
+        body:'You will get alerts 30 min before each episode you follow!',tag:'ac-test'
+      });
+    },1500);
+  }
+});
+self.addEventListener('notificationclick',e=>{e.notification.close();});`;
+var swReg=null;
+function registerSW(){
+  if(!('serviceWorker' in navigator))return;
+  try{
+    var blob=new Blob([SW_CODE],{type:'application/javascript'});
+    navigator.serviceWorker.register(URL.createObjectURL(blob),{scope:'/'})
+    .then(function(r){swReg=r;rescheduleSW();})
+    .catch(function(){});
+  }catch(e){}
+}
+function sendSW(msg){if(swReg&&swReg.active)swReg.active.postMessage(msg);}
+function rescheduleSW(){
+  var saved=getSN(),shows=[];
+  Object.keys(saved).forEach(function(id){
+    var a=ANIME.find(function(x){return x.id===id;});if(!a)return;
+    var epData=getEpData(a);
+    epData.forEach(function(ep){shows.push(ep);});
+  });
+  if(shows.length)sendSW({type:'SCHEDULE',shows:shows});
+}
+function getEpData(a){
+  var y=+a.s.substr(0,4),m=+a.s.substr(4,2)-1,d=+a.s.substr(6,2);
+  var uh=+a.utc.substr(0,2),um=+a.utc.substr(2,2);
+  var lt=new Date(Date.UTC(y,m,d,uh,um,0)).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  var seasonEnd=seasonRange(CUR_SEASON,CUR_YEAR).end.getTime();
+  var out=[];
+  for(var w=0;w<14;w++){
+    var ep=new Date(Date.UTC(y,m,d+w*7,uh,um,0));
+    if(ep.getTime()>seasonEnd)break;
+    var at=ep.getTime()-30*60*1000;
+    if(at<Date.now())continue;
+    out.push({id:a.id,title:a.title,ep:w+1,pl:PL[a.pl],lt:lt,notifyAt:at});
+  }
+  return out;
+}
+
+/* ══════ COVERS ══════ */
+function loadCoverCache(){
+  try{
+    var d=JSON.parse(localStorage.getItem(CK)||'null');
+    if(!d||Date.now()-d.ts>7*24*60*60*1000)return;
+    covers=d.c||{};descCache=d.dc||{};
+  }catch(e){}
+}
+function saveCoverCache(){
+  try{localStorage.setItem(CK,JSON.stringify({ts:Date.now(),c:covers,dc:descCache}));}catch(e){}
+}
+
+/* ══════ SEASON DATA (AniList) ══════
+   Pulls the full seasonal lineup from AniList, paginating until
+   there's nothing left. Falls back to a cached copy if the network
+   fails, and re-fetches automatically once the season rolls over. */
+function fetchSeasonAnime(season,year,onDone){
+  var out=[],page=1,MAXP=8;
+  function pull(){
+    var q='query($p:Int){Page(page:$p,perPage:50){pageInfo{hasNextPage}media(season:'+season+',seasonYear:'+year+',type:ANIME,format:TV,sort:POPULARITY_DESC){id title{english romaji}coverImage{extraLarge}description(asHtml:false)startDate{year month day}nextAiringEpisode{airingAt episode}}}}';
+    fetch('https://graphql.anilist.co',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body:JSON.stringify({query:q,variables:{p:page}})})
+    .then(function(r){return r.json();})
+    .then(function(data){
+      var pg=data&&data.data&&data.data.Page;
+      var media=(pg&&pg.media)||[];
+      media.forEach(function(m){
+        var sd=m.startDate;if(!sd||!sd.year||!sd.month||!sd.day)return;
+        var ds=sd.year+''+p2(sd.month)+''+p2(sd.day);
+        var utc='130000';
+        if(m.nextAiringEpisode&&m.nextAiringEpisode.airingAt){
+          var ad=new Date(m.nextAiringEpisode.airingAt*1000);
+          utc=p2(ad.getUTCHours())+p2(ad.getUTCMinutes())+p2(ad.getUTCSeconds());
+        }
+        var title=(m.title.english||m.title.romaji||'Unknown').trim();
+        var id='al'+m.id;
+        if(m.coverImage&&m.coverImage.extraLarge)covers[id]=m.coverImage.extraLarge;
+        if(m.description)descCache[m.id]=m.description.replace(/<[^>]*>/g,'').replace(/\n+/g,' ').trim();
+        out.push({id:id,title:title,al:m.id,pl:'cr',t:'n',dub:0,s:ds,utc:utc});
+      });
+      if(pg&&pg.pageInfo&&pg.pageInfo.hasNextPage&&page<MAXP){page++;pull();}
+      else onDone(out);
+    })
+    .catch(function(){onDone(out.length?out:null);});
+  }
+  pull();
+}
+function loadSeasonData(force,cb){
+  var now=seasonForDate(new Date());
+  CUR_SEASON=now.season;CUR_YEAR=now.year;
+  var key=seasonKeyOf(CUR_SEASON,CUR_YEAR);
+  var cached=null;
+  try{cached=JSON.parse(localStorage.getItem(SCK)||'null');}catch(e){}
+  var isRollover=cached&&cached.key&&cached.key!==key;
+  if(!force&&cached&&cached.key===key&&cached.anime&&cached.anime.length&&Date.now()-cached.ts<6*60*60*1000){
+    ANIME=cached.anime;
+    covers=Object.assign({},cached.covers||{},covers);
+    descCache=Object.assign({},cached.descCache||{},descCache);
+    updateSeasonUI();
+    cb(false,false);
+    return;
+  }
+  var lt=document.getElementById('ltxt');if(lt)lt.textContent='Loading '+seasonLabel(CUR_SEASON,CUR_YEAR)+' shows…';
+  fetchSeasonAnime(CUR_SEASON,CUR_YEAR,function(result){
+    if(result&&result.length){
+      ANIME=result;
+      try{localStorage.setItem(SCK,JSON.stringify({key:key,ts:Date.now(),anime:ANIME,covers:covers,descCache:descCache}));}catch(e){}
+      updateSeasonUI();
+      cb(true,isRollover);
+    }else if(cached&&cached.anime&&cached.anime.length){
+      // network failed — fall back to whatever we had, even if stale/last season
+      ANIME=cached.anime;CUR_SEASON=cached.key.split('-')[0];CUR_YEAR=+cached.key.split('-')[1];
+      covers=Object.assign({},cached.covers||{},covers);
+      descCache=Object.assign({},cached.descCache||{},descCache);
+      updateSeasonUI();
+      showToast('Could not reach AniList — showing last saved season','warn','⚠');
+      cb(false,false);
+    }else{
+      updateSeasonUI();
+      showToast('Could not load season data — check your connection','warn','⚠');
+      cb(false,false);
+    }
+  });
+}
+function updateSeasonUI(){
+  var label=seasonLabel(CUR_SEASON,CUR_YEAR),emoji=SEASON_EMOJI[CUR_SEASON]||'📺';
+  var badge=document.getElementById('seasonBadge');if(badge)badge.textContent=emoji+' '+label+' · All Platforms';
+  var t=document.getElementById('pageTitle');if(t)t.textContent='My Anime Companion — '+label;
+  var fn=document.getElementById('modalFname');if(fn)fn.textContent='anime-'+CUR_SEASON.toLowerCase()+CUR_YEAR+'.ics';
+}
+/* Checks periodically (and whenever the tab regains focus) whether the
+   real-world season has changed since we last loaded, so the app keeps
+   itself current for as long as it's left open. */
+function checkSeasonRollover(){
+  var now=seasonForDate(new Date());
+  if(now.season===CUR_SEASON&&now.year===CUR_YEAR)return;
+  loadSeasonData(false,function(changed,isRollover){
+    loadState();renderBrowse();updateBar();initLoad();
+    if(isRollover)showToast('New season loaded: '+seasonLabel(CUR_SEASON,CUR_YEAR)+' 🎉','success','🌟');
+  });
+}
+/* ══════ ARCHIVE / PAST SEASONS ══════ */
+var ARCHIVE_LOOKBACK=16; // ~4 years of past seasons
+var archiveViewing=null;
+var ACK='ac_archive_v1'; // cache prefix for archived seasons
+function pastSeasonList(){
+  var out=[],s=CUR_SEASON,y=CUR_YEAR;
+  for(var i=0;i<ARCHIVE_LOOKBACK;i++){
+    var idx=SEASON_ORDER.indexOf(s);
+    if(idx===0){s='FALL';y--;}else{s=SEASON_ORDER[idx-1];}
+    out.push({season:s,year:y});
+  }
+  return out;
+}
+function openArchive(){
+  document.getElementById('archiveModal').classList.add('show');
+  showArchiveChips();
+}
+function closeArchive(){document.getElementById('archiveModal').classList.remove('show');}
+function showArchiveChips(){
+  archiveViewing=null;
+  document.getElementById('archiveBackRow').style.display='none';
+  document.getElementById('archiveResults').innerHTML='';
+  document.getElementById('archiveLoading').style.display='none';
+  document.getElementById('archiveSub').textContent='Every anime season, archived. Pick one to browse.';
+  var chips=document.getElementById('archiveChips');
+  chips.style.display='grid';
+  chips.innerHTML=pastSeasonList().map(function(sy){
+    return '<button class="szchip" onclick="pickArchiveSeason(\''+sy.season+'\','+sy.year+')">'+
+      '<span class="sze">'+SEASON_EMOJI[sy.season]+'</span><span class="szl">'+seasonLabel(sy.season,sy.year)+'</span></button>';
+  }).join('');
+}
+function fetchArchiveMedia(season,year,onDone){
+  var out=[],page=1,MAXP=6;
+  function pull(){
+    var q='query($p:Int){Page(page:$p,perPage:50){pageInfo{hasNextPage}media(season:'+season+',seasonYear:'+year+',type:ANIME,format:TV,sort:POPULARITY_DESC){id title{english romaji}coverImage{large extraLarge}episodes format genres seasonYear startDate{year month day}}}}';
+    fetch('https://graphql.anilist.co',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body:JSON.stringify({query:q,variables:{p:page}})})
+    .then(function(r){return r.json();})
+    .then(function(data){
+      var pg=data&&data.data&&data.data.Page;
+      var media=(pg&&pg.media)||[];
+      out=out.concat(media);
+      if(pg&&pg.pageInfo&&pg.pageInfo.hasNextPage&&page<MAXP){page++;pull();}
+      else onDone(out);
+    })
+    .catch(function(){onDone(out.length?out:null);});
+  }
+  pull();
+}
+function pickArchiveSeason(season,year){
+  archiveViewing=seasonKeyOf(season,year);
+  document.getElementById('archiveChips').style.display='none';
+  document.getElementById('archiveBackRow').style.display='';
+  document.getElementById('archiveResults').innerHTML='';
+  document.getElementById('archiveSub').textContent=seasonLabel(season,year)+' — every TV anime that aired.';
+  var cacheKey=ACK+'_'+archiveViewing;
+  var cached=null;
+  try{cached=JSON.parse(localStorage.getItem(cacheKey)||'null');}catch(e){}
+  if(cached&&cached.media&&Date.now()-cached.ts<30*24*60*60*1000){
+    renderArchiveResults(cached.media,season,year);
+    return;
+  }
+  document.getElementById('archiveLoading').style.display='flex';
+  fetchArchiveMedia(season,year,function(media){
+    document.getElementById('archiveLoading').style.display='none';
+    if(media===null){
+      document.getElementById('archiveResults').innerHTML='<div style="color:var(--muted);font-size:11px;padding:10px 0">Could not load this season — check your connection.</div>';
+      return;
+    }
+    try{localStorage.setItem(cacheKey,JSON.stringify({ts:Date.now(),media:media}));}catch(e){}
+    renderArchiveResults(media,season,year);
+  });
+}
+function renderArchiveResults(media,season,year){
+  if(archiveViewing!==seasonKeyOf(season,year))return; // user navigated away
+  var box=document.getElementById('archiveResults');
+  if(!media.length){box.innerHTML='<div style="color:var(--muted);font-size:11px;padding:10px 0">No shows found for this season.</div>';return;}
+  var html='';
+  media.forEach(function(m){
+    libSearchCache[m.id]=m; // reuse existing library quick-add plumbing
+    var t=(m.title.english||m.title.romaji||'Untitled').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    var img=m.coverImage&&(m.coverImage.large||m.coverImage.extraLarge)||'';
+    var already=!!lib['al_'+m.id];
+    var sd=m.startDate,dateStr=(sd&&sd.year)?fmtDs(sd.year+''+p2(sd.month||1)+''+p2(sd.day||1)):'';
+    html+='<div class="lsr-item">';
+    html+=img?'<img class="lsr-img" src="'+img+'">':'<div class="le-img-ph">🎌</div>';
+    html+='<div class="lsr-info"><div class="lsr-title">'+t+'</div><div class="lsr-meta">'+(dateStr||'—')+' · '+(m.episodes||'?')+' eps · '+(m.format||'')+'</div></div>';
+    html+='<div class="lsr-actions">';
+    if(already){html+='<span class="lsr-btn" style="opacity:.5">Added</span>';}
+    else{
+      html+='<button class="lsr-btn" onclick="quickAddSearch('+m.id+',true)">✓ Done</button>';
+      html+='<button class="lsr-btn primary" onclick="openLibModalFromSearch('+m.id+')">+ Add</button>';
+    }
+    html+='</div></div>';
+  });
+  box.innerHTML=html;
+}
+
+function initLoad(){
+  var miss=ANIME.filter(function(a){return !covers[a.id];});
+  if(!miss.length){document.getElementById('lbanner').classList.add('done');return;}
+  var CHUNK=8,chunks=[],i;
+  for(i=0;i<miss.length;i+=CHUNK)chunks.push(miss.slice(i,i+CHUNK));
+  var done=0,total=chunks.length;
+  chunks.forEach(function(chunk){
+    var parts=chunk.map(function(a,ci){
+      return a.al?
+        'x'+ci+':Media(id:'+a.al+',type:ANIME){coverImage{extraLarge large}description(asHtml:false)}':
+        'x'+ci+':Media(search:'+JSON.stringify(a.title.split(':')[0].split('—')[0].trim())+',type:ANIME,seasonYear:'+CUR_YEAR+'){coverImage{extraLarge large}description(asHtml:false)}';
+    });
+    fetch('https://graphql.anilist.co',{method:'POST',
+      headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body:JSON.stringify({query:'{'+parts.join(' ')+'}'}),})
+    .then(function(r){return r.json();})
+    .then(function(data){
+      if(data&&data.data)chunk.forEach(function(a,ci){
+        var d=data.data['x'+ci];
+        if(d){
+          if(d.coverImage)covers[a.id]=d.coverImage.extraLarge||d.coverImage.large||'';
+          if(d.description&&a.al)descCache[a.al]=d.description.replace(/<[^>]*>/g,'').replace(/\n+/g,' ').trim();
+        }
+      });
+      done++;
+      var pct=Math.round(done/total*100);
+      var pb=document.getElementById('lprog'),lt=document.getElementById('ltxt');
+      if(pb)pb.style.width=pct+'%';if(lt)lt.textContent='Loading covers '+pct+'%';
+      chunk.forEach(function(a){
+        if(!covers[a.id])return;
+        injectImg(a.id,covers[a.id]);
+        if(activeId===a.id){var di=document.getElementById('dimg');if(di&&!di.src){di.src=covers[a.id];document.getElementById('diw').style.display='block';document.getElementById('dph').style.display='none';}}
+      });
+      if(done===total){saveCoverCache();document.getElementById('lbanner').classList.add('done');}
+    })
+    .catch(function(){done++;if(done===total)document.getElementById('lbanner').classList.add('done');});
+  });
+}
+function injectImg(id,url){
+  var img=document.getElementById('i-'+id),shim=document.getElementById('s-'+id);
+  if(img&&!img.classList.contains('vis')&&!img.src){
+    img.src=url;img.style.display='block';
+    img.onload=function(){this.classList.add('vis');if(shim)shim.style.display='none';};
+    img.onerror=function(){this.style.display='none';};
+  }
+}
+
+/* ══════ SAVE / LOAD ══════ */
+function saveState(){try{localStorage.setItem(SK,JSON.stringify({sel:sel}));}catch(e){}scheduleSync();}
+function loadState(){
+  try{
+    var d=JSON.parse(localStorage.getItem(SK)||'null');
+    if(d&&d.sel){sel=d.sel;
+      // Clean orphans
+      Object.keys(sel).forEach(function(id){if(!ANIME.find(function(a){return a.id===id;}))delete sel[id];});
+    }
+  }catch(e){}
+}
+function getSN(){try{return JSON.parse(localStorage.getItem(NK)||'{}');}catch(e){return {};}}
+function setSN(id,on){var n=getSN();if(on)n[id]=1;else delete n[id];try{localStorage.setItem(NK,JSON.stringify(n));}catch(e){}scheduleSync();}
+
+/* ══════ TABS ══════ */
+function switchTab(tab){
+  curTab=tab;
+  document.getElementById('tab-browse').classList.toggle('on',tab==='browse');
+  document.getElementById('tab-mylist').classList.toggle('on',tab==='mylist');
+  document.getElementById('tab-progression').classList.toggle('on',tab==='progression');
+  document.getElementById('tab-library').classList.toggle('on',tab==='library');
+  document.getElementById('tab-recs').classList.toggle('on',tab==='recs');
+  document.getElementById('view-browse').classList.toggle('on',tab==='browse');
+  document.getElementById('view-mylist').classList.toggle('on',tab==='mylist');
+  document.getElementById('view-progression').classList.toggle('on',tab==='progression');
+  document.getElementById('view-library').classList.toggle('on',tab==='library');
+  document.getElementById('view-recs').classList.toggle('on',tab==='recs');
+  document.getElementById('browseTools').style.display=tab==='browse'?'':'none';
+  document.getElementById('browseStatus').style.display=tab==='browse'?'':'none';
+  document.getElementById('lbanner').style.display=tab==='browse'?'':'none';
+  document.getElementById('libraryTools').style.display=tab==='library'?'':'none';
+  document.getElementById('idPanel').style.display=tab==='library'?'':'none';
+  document.getElementById('libraryFilters').style.display=tab==='library'?'':'none';
+  document.getElementById('libraryFilters2').style.display=tab==='library'?'':'none';
+  document.getElementById('libraryGenreFilters').style.display=tab==='library'?'':'none';
+  document.getElementById('recsTools').style.display=tab==='recs'?'':'none';
+  document.getElementById('bottomBar').style.display=(tab==='library'||tab==='progression'||tab==='recs')?'none':'';
+  if(tab==='mylist'){renderMyList();startCountdownTick();}
+  else{stopCountdownTick();}
+  if(tab==='library'){
+    document.getElementById('libSearch').value='';
+    document.getElementById('libSearchResults').innerHTML='';
+    renderLibrary();
+  }
+  if(tab==='progression')renderProgression();
+  if(tab==='recs'&&!recsLoadedOnce)loadRecs(false);
+}
+
+/* ══════════════════════════════════════════════════
+   IDENTIFY FROM SCREENSHOT — on-device OCR + AniList text search
+══════════════════════════════════════════════════ */
+var idCounter=0,idChain=Promise.resolve();
+var ocrWorkerPromise=null,curOcrRow=null;
+/* One shared worker, configured for SPARSE_TEXT: treats scattered UI
+   text (title next to a thumbnail, badges, nav bar, etc.) as independent
+   fragments instead of forcing them into one merged reading order —
+   that merging is what produced garbage like "= pA 5 = New Saga". */
+function getOcrWorker(){
+  if(!ocrWorkerPromise){
+    ocrWorkerPromise=Tesseract.createWorker('eng',undefined,{logger:function(m){
+      if(curOcrRow&&m.status==='recognizing text'){
+        var st=curOcrRow.querySelector('.id-status');
+        if(st)st.innerHTML='<div class="lspin"></div> Reading text… '+Math.round((m.progress||0)*100)+'%';
+      }
+    }}).then(function(w){
+      return w.setParameters({tessedit_pageseg_mode:Tesseract.PSM.SPARSE_TEXT}).then(function(){return w;});
+    });
+  }
+  return ocrWorkerPromise;
+}
+/* Flatten Tesseract's block>paragraph>line tree into {text,confidence}
+   lines. Falls back to plain text (neutral confidence) if the
+   structured output isn't available. */
+function flattenLines(data){
+  var lines=[];
+  if(data&&data.blocks){
+    data.blocks.forEach(function(b){
+      (b.paragraphs||[]).forEach(function(p){
+        (p.lines||[]).forEach(function(l){
+          if(l&&l.text&&l.text.trim()){
+            var h=(l.bbox&&l.bbox.y1!=null&&l.bbox.y0!=null)?(l.bbox.y1-l.bbox.y0):null;
+            lines.push({text:l.text,confidence:l.confidence,height:h});
+          }
+        });
+      });
+    });
+  }
+  if(!lines.length&&data&&data.text){
+    data.text.split('\n').forEach(function(t){if(t.trim())lines.push({text:t,confidence:65,height:null});});
+  }
+  return lines;
+}
+function handleImageFiles(files){
+  var arr=Array.prototype.slice.call(files||[]);
+  arr.forEach(function(f){if(f.type&&f.type.indexOf('image/')===0)queueScreenshot(f);});
+  var inp=document.getElementById('idFileInput');if(inp)inp.value='';
+}
+function queueScreenshot(file){
+  idChain=idChain.then(function(){return processScreenshot(file);}).catch(function(){});
+}
+function processScreenshot(file){
+  var scanId='idscan_'+(++idCounter);
+  var url=URL.createObjectURL(file);
+  var box=document.getElementById('idResults');
+  var scanRow=document.createElement('div');
+  scanRow.className='id-card';scanRow.id=scanId;
+  scanRow.innerHTML='<button class="id-close" onclick="dismissIdRow(\''+scanId+'\')" aria-label="Dismiss">✕</button>'+
+    '<img class="id-thumb" src="'+url+'"><div class="id-body">'+
+    '<div class="id-status"><div class="lspin"></div> Reading text…</div></div>';
+  box.insertBefore(scanRow,box.firstChild);
+  curOcrRow=scanRow;
+  return getOcrWorker().then(function(worker){
+    return worker.recognize(file,{},{blocks:true});
+  }).then(function(result){
+    curOcrRow=null;
+    var lines=flattenLines(result&&result.data);
+    var cands=extractTitleCandidates(lines);
+    var wasCancelled=!!scanRow._cancelled;
+    scanRow.remove();
+    if(wasCancelled)return null;
+    if(!cands.length){
+      renderIdErrorStandalone(url,'Couldn\'t find any readable titles in this image.');
+      return null;
+    }
+    return Promise.all(cands.map(function(c){return queueTitleLookup(c,url);}));
+  }).catch(function(){
+    curOcrRow=null;
+    var wasCancelled=!!scanRow._cancelled;
+    scanRow.remove();
+    if(!wasCancelled)renderIdErrorStandalone(url,'Couldn\'t read text from this image.');
+  });
+}
+/* Pull likely title lines out of OCR line data, filtering UI chrome
+   (nav labels, "Dub English | Sub", timestamps, battery %, low-confidence
+   garbage from icons/badges, etc.) and picking up an adjacent
+   "Start Watching: E1" / "Episode 3" line as that title's episode number
+   when present. */
+function extractTitleCandidates(lineObjs){
+  var MIN_CONF=60;
+  var NOISE=[
+    /^start watching$/i,
+    /^(dub|sub)\b/i,
+    /\b(dub|sub)\b.*\|.*\b(dub|sub)\b/i,
+    /^(my lists?|watchlist|crunchylists?|history|downloads|home|browse|simulcasts|account)$/i,
+    /^(english|spanish|japanese|portuguese|french|german|italian|korean|chinese|latin america)\b/i,
+    /^\d{1,2}:\d{2}\s*(am|pm)?$/i,
+    /^\d{1,3}\s*%$/,
+    /^\d+$/
+  ];
+  var NAV_WORDS={watchlist:1,crunchylists:1,history:1,downloads:1,browse:1,simulcasts:1,account:1,my:1,lists:1,home:1,search:1};
+  var EP_LINE=/(?:start watching[:\s]*)?(?:s(?:eason)?\s*\d+\s*)?e(?:p(?:isode)?)?\.?\s*(\d+)\b/i;
+  var prelim=[];
+  lineObjs.forEach(function(lo){
+    if(lo.confidence!=null&&lo.confidence<MIN_CONF)return;
+    var t=lo.text.replace(/[|•·»«_~=]/g,' ').replace(/\s+/g,' ').trim();
+    if(!t)return;
+    if(t.length<25&&EP_LINE.test(t)){
+      var m=t.match(EP_LINE);
+      if(prelim.length&&prelim[prelim.length-1].epNum==null&&m[1])prelim[prelim.length-1].epNum=parseInt(m[1],10);
+      return;
+    }
+    if(t.length<3||t.length>70)return;
+    if(NOISE.some(function(re){return re.test(t);}))return;
+    var words=t.toLowerCase().split(' ').filter(Boolean);
+    var navHits=words.filter(function(w){return NAV_WORDS[w];}).length;
+    if(navHits>=2)return;
+    var letters=(t.match(/[A-Za-z]/g)||[]).length;
+    if(letters<t.length*0.4)return;
+    var shortTokens=words.filter(function(w){return w.length<=2;}).length;
+    if(words.length>1&&shortTokens/words.length>0.5)return;
+    prelim.push({title:t,epNum:null,height:lo.height});
+  });
+  /* Titles are reliably the largest text in each row/card — captions,
+     labels, and badge text sit noticeably smaller. Drop anything well
+     below the biggest text found, so small text stops slipping through
+     even when it isn't caught by the wording filters above. */
+  var maxH=0;
+  prelim.forEach(function(p){if(p.height!=null&&p.height>maxH)maxH=p.height;});
+  var out=[],seen={};
+  prelim.forEach(function(p){
+    if(maxH>0&&p.height!=null&&p.height<maxH*0.55)return;
+    var key=p.title.toLowerCase();
+    if(seen[key])return;seen[key]=true;
+    out.push({title:p.title,epNum:p.epNum});
+  });
+  return out;
+}
+function normTitle(s){return(s||'').toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();}
+function bigrams(s){var b=[];for(var i=0;i<s.length-1;i++)b.push(s.substr(i,2));return b;}
+/* Dice-coefficient string similarity, 0..1 — tolerant of OCR typos,
+   punctuation, and romaji/English title mismatches. */
+function titleSimilarity(a,b){
+  a=normTitle(a);b=normTitle(b);
+  if(!a||!b)return 0;
+  if(a===b)return 1;
+  var ba=bigrams(a),bb=bigrams(b);
+  if(!ba.length||!bb.length)return(a.indexOf(b)>-1||b.indexOf(a)>-1)?0.6:0;
+  var map={};ba.forEach(function(g){map[g]=(map[g]||0)+1;});
+  var matches=0;
+  bb.forEach(function(g){if(map[g]>0){matches++;map[g]--;}});
+  return(2*matches)/(ba.length+bb.length);
+}
+function queueTitleLookup(cand,thumbUrl){
+  var rowId='idrow_'+(++idCounter);
+  var box=document.getElementById('idResults');
+  var row=document.createElement('div');
+  row.className='id-card';row.id=rowId;
+  var safeCand=cand.title.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  row.innerHTML='<button class="id-close" onclick="dismissIdRow(\''+rowId+'\')" aria-label="Dismiss">✕</button>'+
+    '<img class="id-thumb" src="'+thumbUrl+'"><div class="id-body">'+
+    '<div class="id-status"><div class="lspin"></div> Matching "'+safeCand+'"…</div></div>';
+  box.insertBefore(row,box.firstChild);
+  var q='query($s:String){Page(perPage:5){media(search:$s,type:ANIME,sort:SEARCH_MATCH){id title{romaji english native}coverImage{large}episodes format seasonYear genres}}}';
+  return fetch('https://graphql.anilist.co',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},
+    body:JSON.stringify({query:q,variables:{s:cand.title}})})
+  .then(function(r){return r.json();})
+  .then(function(d){
+    var results=(d&&d.data&&d.data.Page&&d.data.Page.media)||[];
+    if(!results.length){renderIdError(rowId,'No match found for "'+safeCand+'".');return;}
+    var scored=results.map(function(m){
+      var titles=[m.title.english,m.title.romaji,m.title.native].filter(Boolean);
+      var best=0;
+      titles.forEach(function(t){var s=titleSimilarity(cand.title,t);if(s>best)best=s;});
+      return{media:m,score:best};
+    }).sort(function(a,b){return b.score-a.score;});
+    var top=scored[0];
+    if(top.score>=0.72){
+      renderIdResult(rowId,{anilistId:top.media.id,epNum:cand.epNum,similarity:top.score,media:top.media,titleFallback:cand.title});
+    }else{
+      renderIdCandidates(rowId,cand,scored.slice(0,3));
+    }
+  })
+  .catch(function(){renderIdError(rowId,'Lookup failed for "'+safeCand+'".');});
+}
+function renderIdCandidates(rowId,cand,scored){
+  var row=document.getElementById(rowId);if(!row)return;
+  var safeCand=cand.title.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  var html='<div class="id-status">Unsure about "'+safeCand+'" — pick one:</div><div class="id-actions">';
+  scored.forEach(function(s){
+    var t=s.media.title.english||s.media.title.romaji;
+    var safeT=t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    html+='<button class="id-btn watch" onclick="pickCandidate(\''+rowId+'\','+s.media.id+')">'+safeT+'</button>';
+  });
+  html+='<button class="id-btn drop" onclick="renderIdError(\''+rowId+'\',\'Skipped.\')">None of these</button></div>';
+  row.querySelector('.id-body').innerHTML=html;
+  row._candidates={};row._epNum=cand.epNum;
+  scored.forEach(function(s){row._candidates[s.media.id]=s.media;});
+}
+function pickCandidate(rowId,mediaId){
+  var row=document.getElementById(rowId);if(!row||!row._candidates)return;
+  var m=row._candidates[mediaId];if(!m)return;
+  renderIdResult(rowId,{anilistId:m.id,epNum:row._epNum,similarity:0.6,media:m,titleFallback:m.title.english||m.title.romaji});
+}
+function renderIdErrorStandalone(thumbUrl,msg){
+  var rowId='idrow_'+(++idCounter);
+  var box=document.getElementById('idResults');
+  var row=document.createElement('div');
+  row.className='id-card';row.id=rowId;
+  row.innerHTML='<button class="id-close" onclick="dismissIdRow(\''+rowId+'\')" aria-label="Dismiss">✕</button>'+
+    '<img class="id-thumb" src="'+thumbUrl+'"><div class="id-body">'+
+    '<div class="id-status err">⚠ '+msg+'</div></div>';
+  box.insertBefore(row,box.firstChild);
+}
+function renderIdError(rowId,msg){
+  var row=document.getElementById(rowId);if(!row)return;
+  row.querySelector('.id-body').innerHTML='<div class="id-status err">⚠ '+msg+'</div>';
+}
+function renderIdResult(rowId,info){
+  var row=document.getElementById(rowId);if(!row)return;
+  var m=info.media;
+  var title=(m&&(m.title.english||m.title.romaji))||info.titleFallback;
+  var safe=title.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  var epTotal=(m&&m.episodes)||null;
+  var pct=Math.round(info.similarity*100);
+  var confClass=pct>=90?'high':pct>=75?'mid':'low';
+  var epTxt=info.epNum?('Episode <b>'+info.epNum+'</b> detected'):'Episode unclear';
+  row.dataset.anilistId=info.anilistId;
+  row.dataset.ep=info.epNum||'';
+  row.dataset.epTotal=epTotal||'';
+  row.dataset.title=title;
+  row.dataset.cover=(m&&m.coverImage&&m.coverImage.large)||'';
+  row.dataset.format=(m&&m.format)||'';
+  row.dataset.year=(m&&m.seasonYear)||'';
+  row.dataset.genres=(m&&m.genres)?m.genres.join('|'):'';
+  row.querySelector('.id-body').innerHTML=
+    '<div class="id-title">'+safe+'</div>'+
+    '<div class="id-conf '+confClass+'">'+pct+'% match</div>'+
+    '<div class="id-ep">'+epTxt+(epTotal?' of '+epTotal:'')+'</div>'+
+    '<div class="id-actions">'+
+      '<button class="id-btn watch" onclick="idQuickStatus(\''+rowId+'\',\'watching\')">▶ Continue</button>'+
+      '<button class="id-btn done" onclick="idQuickStatus(\''+rowId+'\',\'completed\')">✓ Finished</button>'+
+      '<button class="id-btn drop" onclick="idQuickStatus(\''+rowId+'\',\'dropped\')">✕ Dropped</button>'+
+    '</div>';
+}
+/* Shared fade-and-collapse removal for any id-card row, used both
+   when a status is picked and when the user manually dismisses a
+   wrong/garbled/failed result. */
+function fadeRemoveRow(row){
+  if(!row)return;
+  row.style.transition='opacity .35s,transform .35s,margin .35s,padding .35s,max-height .35s';
+  row.style.maxHeight=row.offsetHeight+'px';
+  requestAnimationFrame(function(){
+    row.style.opacity='0';row.style.transform='scale(.97)';
+    row.style.maxHeight='0px';row.style.marginTop='0';row.style.marginBottom='0';
+    row.style.paddingTop='0';row.style.paddingBottom='0';row.style.overflow='hidden';
+  });
+  setTimeout(function(){row.remove();},380);
+}
+function dismissIdRow(rowId){
+  var row=document.getElementById(rowId);if(!row)return;
+  row._cancelled=true;
+  fadeRemoveRow(row);
+}
+function idQuickStatus(rowId,status){
+  var row=document.getElementById(rowId);if(!row)return;
+  var anilistId=row.dataset.anilistId;if(!anilistId)return;
+  var epNum=row.dataset.ep?parseInt(row.dataset.ep,10):0;
+  var epTotal=row.dataset.epTotal?parseInt(row.dataset.epTotal,10):null;
+  var key='al_'+anilistId;
+  var existing=lib[key];
+  var watched=status==='completed'?(epTotal||epNum||0):(epNum||(existing?existing.episodesWatched:0)||0);
+  lib[key]={
+    id:key,anilistId:parseInt(anilistId,10),
+    title:row.dataset.title,
+    cover:row.dataset.cover,
+    format:row.dataset.format,
+    episodesTotal:epTotal,
+    episodesWatched:watched,
+    status:status,
+    score:existing?existing.score:null,
+    genres:row.dataset.genres?row.dataset.genres.split('|'):[],
+    year:row.dataset.year?parseInt(row.dataset.year,10):null,
+    dateAdded:existing?existing.dateAdded:Date.now(),
+    manual:false
+  };
+  saveLib();
+  var label=status==='completed'?'Marked completed':status==='dropped'?'Marked dropped':'Continuing from ep '+watched;
+  showToast(label+': '+row.dataset.title,'success','✓');
+  fadeRemoveRow(row);
+  if(curTab==='library')renderLibrary();
+}
+
+/* ══════════════════════════════════════════════════
+   HISTORY / LIBRARY — all-time watch tracker
+══════════════════════════════════════════════════ */
+function loadLib(){try{var d=JSON.parse(localStorage.getItem(LK)||'null');if(d)lib=d;}catch(e){}}
+function saveLib(){try{localStorage.setItem(LK,JSON.stringify(lib));}catch(e){}scheduleSync();}
+
+/* ---- search AniList's full catalog ---- */
+function onLibSearchInput(){
+  clearTimeout(libSearchTimer);
+  var q=document.getElementById('libSearch').value.trim();
+  var box=document.getElementById('libSearchResults');
+  if(q.length<2){box.innerHTML='';return;}
+  libSearchTimer=setTimeout(function(){doLibSearch(q);},400);
+}
+function doLibSearch(q){
+  var box=document.getElementById('libSearchResults');
+  box.innerHTML='<div style="color:var(--muted);font-size:11px;padding:8px 0 2px">Searching…</div>';
+  var query='query($s:String){Page(perPage:8){media(search:$s,type:ANIME,sort:POPULARITY_DESC){id title{romaji english}coverImage{large}episodes format seasonYear genres}}}';
+  fetch('https://graphql.anilist.co',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},
+    body:JSON.stringify({query:query,variables:{s:q}})})
+  .then(function(r){return r.json();})
+  .then(function(data){
+    var media=(data&&data.data&&data.data.Page&&data.data.Page.media)||[];
+    renderLibSearchResults(media);
+  })
+  .catch(function(){box.innerHTML='<div style="color:var(--muted);font-size:11px;padding:8px 0 2px">Search failed — check your connection.</div>';});
+}
+function renderLibSearchResults(media){
+  var box=document.getElementById('libSearchResults');
+  if(!media.length){box.innerHTML='<div style="color:var(--muted);font-size:11px;padding:8px 0 2px">No results.</div>';return;}
+  var html='';
+  media.forEach(function(m){
+    libSearchCache[m.id]=m;
+    var t=(m.title.english||m.title.romaji||'Untitled').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    var img=m.coverImage&&m.coverImage.large?m.coverImage.large:'';
+    var already=!!lib['al_'+m.id];
+    html+='<div class="lsr-item">';
+    html+=img?'<img class="lsr-img" src="'+img+'">':'<div class="le-img-ph">🎌</div>';
+    html+='<div class="lsr-info"><div class="lsr-title">'+t+'</div><div class="lsr-meta">'+(m.seasonYear||'—')+' · '+(m.episodes||'?')+' eps · '+(m.format||'')+'</div></div>';
+    html+='<div class="lsr-actions">';
+    if(already){html+='<span class="lsr-btn" style="opacity:.5">Added</span>';}
+    else{
+      html+='<button class="lsr-btn" onclick="quickAddSearch('+m.id+',true)">✓ Done</button>';
+      html+='<button class="lsr-btn primary" onclick="openLibModalFromSearch('+m.id+')">+ Add</button>';
+    }
+    html+='</div></div>';
+  });
+  box.innerHTML=html;
+}
+function quickAddSearch(id,completed){
+  var m=libSearchCache[id];if(!m)return;
+  var key='al_'+id;
+  lib[key]={
+    id:key,anilistId:id,
+    title:(m.title.english||m.title.romaji||'Untitled'),
+    cover:(m.coverImage&&m.coverImage.large)||'',
+    format:m.format||'',
+    episodesTotal:m.episodes||null,
+    episodesWatched:completed?(m.episodes||0):0,
+    status:completed?'completed':'planning',
+    score:null,
+    genres:m.genres||[],
+    year:m.seasonYear||null,
+    dateAdded:Date.now(),
+    manual:false
+  };
+  saveLib();renderLibrary();
+  if(curTab==='recs')renderRecs();
+  document.getElementById('libSearch').value='';document.getElementById('libSearchResults').innerHTML='';
+  showToast((completed?'Marked completed: ':'Added: ')+lib[key].title,'success','✓');
+}
+
+/* ---- add/edit modal ---- */
+function openLibModalFromSearch(id){
+  var m=libSearchCache[id];if(!m)return;
+  libEditKey=null;libPendingAnilist=m;
+  document.getElementById('libModalTitle').innerHTML='Add to <em>History</em>';
+  document.getElementById('lfTitle').value=(m.title.english||m.title.romaji||'');
+  document.getElementById('lfTitle').readOnly=true;
+  document.getElementById('lfEpTotal').value=m.episodes||'';
+  document.getElementById('lfEpWatched').value='';
+  document.getElementById('lfYear').value=m.seasonYear||'';
+  document.getElementById('lfScore').value='';
+  setLfStatus('watching');
+  lfGenres=(m.genres||[]).slice();
+  renderGenreGrp();
+  document.getElementById('lfDeleteBtn').style.display='none';
+  document.getElementById('libModal').classList.add('show');
+}
+function openLibModal(editKey){
+  libPendingAnilist=null;
+  document.getElementById('lfTitle').readOnly=false;
+  if(editKey&&lib[editKey]){
+    libEditKey=editKey;var e=lib[editKey];
+    document.getElementById('libModalTitle').textContent='Edit Entry';
+    document.getElementById('lfTitle').value=e.title;
+    document.getElementById('lfTitle').readOnly=!!e.anilistId;
+    document.getElementById('lfEpTotal').value=e.episodesTotal||'';
+    document.getElementById('lfEpWatched').value=e.episodesWatched||0;
+    document.getElementById('lfYear').value=e.year||'';
+    document.getElementById('lfScore').value=e.score||'';
+    setLfStatus(e.status||'watching');
+    lfGenres=(e.genres||[]).slice();
+    document.getElementById('lfDeleteBtn').style.display='';
+  }else{
+    libEditKey=null;
+    document.getElementById('libModalTitle').innerHTML='Add to <em>History</em>';
+    document.getElementById('lfTitle').value='';
+    document.getElementById('lfEpTotal').value='';
+    document.getElementById('lfEpWatched').value='';
+    document.getElementById('lfYear').value='';
+    document.getElementById('lfScore').value='';
+    setLfStatus('watching');
+    lfGenres=[];
+    document.getElementById('lfDeleteBtn').style.display='none';
+  }
+  renderGenreGrp();
+  document.getElementById('libModal').classList.add('show');
+}
+function closeLibModal(){document.getElementById('libModal').classList.remove('show');}
+function setLfStatus(s){
+  lfStatus=s;
+  document.querySelectorAll('#lfStatusGrp .lf-status-opt').forEach(function(o){o.classList.toggle('on',o.dataset.s===s);});
+}
+function renderGenreGrp(){
+  var box=document.getElementById('lfGenreGrp');
+  box.innerHTML=GENRES.map(function(g){
+    return '<div class="lf-genre-opt'+(lfGenres.indexOf(g)>-1?' on':'')+'" onclick="toggleLfGenre(\''+g+'\')">'+g+'</div>';
+  }).join('');
+}
+function toggleLfGenre(g){
+  var i=lfGenres.indexOf(g);
+  if(i>-1)lfGenres.splice(i,1);else lfGenres.push(g);
+  renderGenreGrp();
+}
+function saveLibEntry(){
+  var title=document.getElementById('lfTitle').value.trim();
+  if(!title){showToast('Please enter a title','warn','⚠');return;}
+  var epTotal=document.getElementById('lfEpTotal').value;epTotal=epTotal?parseInt(epTotal,10):null;
+  var epWatched=parseInt(document.getElementById('lfEpWatched').value||'0',10);
+  var year=document.getElementById('lfYear').value;year=year?parseInt(year,10):null;
+  var score=document.getElementById('lfScore').value;score=score?parseInt(score,10):null;
+
+  var key=libEditKey,existing=key?lib[key]:null;
+  if(!key){
+    key=libPendingAnilist?('al_'+libPendingAnilist.id):('m_'+Date.now()+Math.random().toString(36).substr(2,5));
+  }
+  lib[key]={
+    id:key,
+    anilistId:libPendingAnilist?libPendingAnilist.id:(existing?existing.anilistId:null),
+    title:title,
+    cover:libPendingAnilist?((libPendingAnilist.coverImage&&libPendingAnilist.coverImage.large)||''):(existing?existing.cover:''),
+    format:libPendingAnilist?(libPendingAnilist.format||''):(existing?existing.format:''),
+    episodesTotal:epTotal,
+    episodesWatched:epWatched,
+    status:lfStatus,
+    score:score,
+    genres:lfGenres.slice(),
+    year:year,
+    dateAdded:existing?existing.dateAdded:Date.now(),
+    manual:existing?existing.manual:!libPendingAnilist
+  };
+  saveLib();closeLibModal();renderLibrary();
+  showToast('Saved: '+title,'success','✓');
+}
+function deleteLibEntryFromModal(){
+  if(libEditKey&&lib[libEditKey]){delete lib[libEditKey];saveLib();closeLibModal();renderLibrary();showToast('Removed from history','info','🗑');}
+}
+function setLibFilter(f,btn){
+  libFilter=f;
+  document.querySelectorAll('#libraryFilters .lib-fb').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');renderLibrary();
+}
+function setLibFormat(f){libFormat=f;renderLibrary();}
+function setLibYear(y){libYear=y;renderLibrary();}
+function setLibGenre(g,btn){
+  libGenre=g;
+  document.querySelectorAll('#libraryGenreFilters .lib-fb').forEach(function(b){b.classList.remove('on');});
+  if(btn)btn.classList.add('on');
+  renderLibrary();
+}
+function getLibList(){
+  var arr=Object.keys(lib).map(function(k){return lib[k];});
+  if(libFilter!=='all')arr=arr.filter(function(e){return e.status===libFilter;});
+  if(libFormat!=='all')arr=arr.filter(function(e){return(e.format||'Unknown')===libFormat;});
+  if(libYear!=='all')arr=arr.filter(function(e){return String(e.year||'Unknown')===libYear;});
+  if(libGenre!=='all')arr=arr.filter(function(e){return(e.genres||[]).indexOf(libGenre)>-1;});
+  arr.sort(function(a,b){return b.dateAdded-a.dateAdded;});
+  return arr;
+}
+function computeLibStats(){
+  var all=Object.keys(lib).map(function(k){return lib[k];});
+  var totalShows=all.length;
+  var completed=all.filter(function(e){return e.status==='completed';}).length;
+  var totalEp=all.reduce(function(s,e){return s+(e.episodesWatched||0);},0);
+  var totalMin=totalEp*24;
+  var days=Math.floor(totalMin/1440),hrs=Math.floor((totalMin%1440)/60);
+  var timeStr=days>0?(days+'d '+hrs+'h'):(hrs+'h');
+  var gc={};
+  all.forEach(function(e){(e.genres||[]).forEach(function(g){gc[g]=(gc[g]||0)+1;});});
+  var genreArr=Object.keys(gc).map(function(g){return{g:g,c:gc[g]};}).sort(function(a,b){return b.c-a.c;}).slice(0,8);
+  var yc={};
+  all.forEach(function(e){if(e.year)yc[e.year]=(yc[e.year]||0)+1;});
+  var yearArr=Object.keys(yc).map(function(y){return{y:y,c:yc[y]};}).sort(function(a,b){return b.y-a.y;});
+  var maxYearC=yearArr.reduce(function(m,x){return Math.max(m,x.c);},1);
+  return{totalShows:totalShows,completed:completed,totalEp:totalEp,timeStr:timeStr,genreArr:genreArr,yearArr:yearArr,maxYearC:maxYearC};
+}
+function renderProgression(){
+  var cont=document.getElementById('view-progression');
+  var stats=computeLibStats();
+  var html='<div class="stats-wrap"><div class="stats-grid">';
+  html+='<div class="stat-card"><div class="stat-num">'+stats.totalShows+'</div><div class="stat-label">Shows Tracked</div></div>';
+  html+='<div class="stat-card green"><div class="stat-num">'+stats.completed+'</div><div class="stat-label">Completed</div></div>';
+  html+='<div class="stat-card purple"><div class="stat-num">'+stats.totalEp+'</div><div class="stat-label">Episodes Watched</div></div>';
+  html+='<div class="stat-card"><div class="stat-num">'+stats.timeStr+'</div><div class="stat-label">Est. Time Watched</div></div>';
+  html+='</div>';
+  if(stats.genreArr.length){
+    html+='<div class="bd-section"><div class="bd-title">Top Genres</div><div class="bd-genres">';
+    stats.genreArr.forEach(function(x){html+='<div class="genre-chip"><b>'+x.c+'</b> '+x.g+'</div>';});
+    html+='</div></div>';
+  }
+  if(stats.yearArr.length){
+    html+='<div class="bd-section"><div class="bd-title">By Year</div><div class="bd-years">';
+    stats.yearArr.forEach(function(x){
+      var pct=Math.round(x.c/stats.maxYearC*100);
+      html+='<div class="yr-row"><div class="yr-label">'+x.y+'</div><div class="yr-track"><div class="yr-fill" style="width:'+pct+'%"></div></div><div class="yr-count">'+x.c+'</div></div>';
+    });
+    html+='</div></div>';
+  }
+  html+='</div>';
+  if(!stats.totalShows){
+    html+='<div class="lib-empty"><div class="mle-ico">📈</div><p>No progression yet.<br>Add shows in the <b>History</b> tab to see your stats here.</p></div>';
+  }
+  cont.innerHTML=html;
+}
+function renderLibrary(){
+  var cont=document.getElementById('view-library');
+  var all=Object.keys(lib).map(function(k){return lib[k];});
+  var fmtSel=document.getElementById('libFmtSel'),yearSel=document.getElementById('libYearSel'),genreBox=document.getElementById('libraryGenreFilters');
+  if(fmtSel){
+    var fmts={};all.forEach(function(e){fmts[e.format||'Unknown']=1;});
+    var fmtList=Object.keys(fmts).sort();
+    fmtSel.innerHTML='<option value="all">All Types</option>'+fmtList.map(function(f){
+      return'<option value="'+f+'"'+(libFormat===f?' selected':'')+'>'+f+'</option>';}).join('');
+    if(libFormat!=='all'&&fmtList.indexOf(libFormat)===-1){libFormat='all';fmtSel.value='all';}
+  }
+  if(yearSel){
+    var yrs={};all.forEach(function(e){yrs[e.year||'Unknown']=1;});
+    var yrList=Object.keys(yrs).sort(function(a,b){return b-a;});
+    yearSel.innerHTML='<option value="all">All Years</option>'+yrList.map(function(y){
+      return'<option value="'+y+'"'+(libYear===String(y)?' selected':'')+'>'+y+'</option>';}).join('');
+    if(libYear!=='all'&&yrList.indexOf(libYear)===-1&&yrList.map(String).indexOf(libYear)===-1){libYear='all';yearSel.value='all';}
+  }
+  if(genreBox){
+    var gs={};all.forEach(function(e){(e.genres||[]).forEach(function(g){gs[g]=1;});});
+    var gList=Object.keys(gs).sort();
+    if(libGenre!=='all'&&gList.indexOf(libGenre)===-1)libGenre='all';
+    if(!gList.length){
+      genreBox.innerHTML='';
+    }else{
+      var gh='<button class="lib-fb'+(libGenre==='all'?' on':'')+'" onclick="setLibGenre(\'all\',this)">All Genres</button>';
+      gh+=gList.map(function(g){
+        var safeG=g.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        return'<button class="lib-fb'+(libGenre===g?' on':'')+'" onclick="setLibGenre(\''+g.replace(/'/g,"\\'")+'\',this)">'+safeG+'</button>';
+      }).join('');
+      genreBox.innerHTML=gh;
+    }
+  }
+  var list=getLibList();
+  var html='';
+  if(!list.length){
+    html+='<div class="lib-empty"><div class="mle-ico">📚</div><p>No anime tracked yet.<br>Search above or <b>add manually</b> to start building your all-time history.</p></div>';
+  }else{
+    html+='<div class="lib-list">';
+    list.forEach(function(e){
+      var safe=(e.title||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      var pct=e.episodesTotal?Math.min(100,Math.round((e.episodesWatched/e.episodesTotal)*100)):0;
+      html+='<div class="lib-entry">';
+      html+=e.cover?'<img class="le-img" src="'+e.cover+'">':'<div class="le-img-ph">🎌</div>';
+      html+='<div class="le-body"><div class="le-title">'+safe+'</div>';
+      html+='<div class="le-meta"><span class="le-status '+e.status+'">'+e.status+'</span>'+(e.year?'<span class="le-eps">'+e.year+'</span>':'')+(e.score?'<span class="le-score">★ '+e.score+'</span>':'')+'</div>';
+      html+='<div class="le-eps"><b>'+(e.episodesWatched||0)+'</b> / '+(e.episodesTotal||'?')+' episodes</div>';
+      if(e.episodesTotal)html+='<div class="le-progress"><div class="le-progress-fill" style="width:'+pct+'%"></div></div>';
+      html+='</div><button class="le-edit" onclick="openLibModal(\''+e.id+'\')">✎</button></div>';
+    });
+    html+='</div>';
+  }
+  cont.innerHTML=html;
+}
+
+/* ══════════════════════════════════════════════════
+   FOR YOU — general anime recommendations from AniList
+   (not tied to your History — fresh random picks each
+   time you open/refresh the tab)
+══════════════════════════════════════════════════ */
+var REC_SORTS=['TRENDING_DESC','POPULARITY_DESC','SCORE_DESC','FAVOURITES_DESC'];
+var REC_SORT_LABELS={TRENDING_DESC:'Trending Now',POPULARITY_DESC:'Popular Right Now',SCORE_DESC:'Highest Rated',FAVOURITES_DESC:'Fan Favorites'};
+var recsLastPages={};
+function shuffleArr(arr){
+  var a=arr.slice();
+  for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}
+  return a;
+}
+function loadRecs(force){
+  var btn=document.getElementById('recsRefreshBtn');
+  var sub=document.getElementById('recsSub');
+  sub.textContent='Fetching fresh picks…';
+  document.getElementById('recsBanner').style.display='flex';
+  if(btn){btn.disabled=true;btn.textContent='Loading…';}
+  if(force)document.getElementById('view-recs').innerHTML='';
+  var trackedIds={};
+  Object.keys(lib).forEach(function(k){if(lib[k].anilistId)trackedIds[lib[k].anilistId]=1;});
+  var chosenSorts=shuffleArr(REC_SORTS).slice(0,2);
+  Promise.all(chosenSorts.map(function(sort){
+    // guarantee a different page than the last time this sort was used,
+    // so refreshing always pulls a genuinely different batch
+    var last=recsLastPages[sort]||0;
+    var page=1+((last+1+Math.floor(Math.random()*5))%8);
+    recsLastPages[sort]=page;
+    var q='query{Page(page:'+page+',perPage:25){media(type:ANIME,sort:'+sort+'){id title{romaji english}coverImage{large}episodes format seasonYear genres averageScore}}}';
+    return fetch('https://graphql.anilist.co',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body:JSON.stringify({query:q})})
+      .then(function(r){return r.json();})
+      .then(function(data){
+        var media=(data&&data.data&&data.data.Page&&data.data.Page.media)||[];
+        var items=shuffleArr(media.filter(function(m){return !trackedIds[m.id];})).slice(0,10);
+        items.forEach(function(m){libSearchCache[m.id]=m;});
+        return {genre:REC_SORT_LABELS[sort]||'Recommended',items:items,ok:true};
+      })
+      .catch(function(err){console.error('recs fetch failed',err);return {genre:REC_SORT_LABELS[sort]||'Recommended',items:[],ok:false};});
+  })).then(function(groups){
+    var anyOk=groups.some(function(g){return g.ok;});
+    recsGroups=groups.filter(function(gr){return gr.items.length;});
+    recsLoadedOnce=true;
+    sub.textContent='Fresh picks from AniList';
+    document.getElementById('recsBanner').style.display='none';
+    if(btn){btn.disabled=false;btn.textContent='↻ Refresh';}
+    renderRecs();
+    if(force){
+      if(!anyOk)showToast('Refresh failed — check your connection','warn','⚠');
+      else if(!recsGroups.length)showToast('No new picks found — try again','info','↻');
+      else showToast('Refreshed with new picks','success','↻');
+    }
+  }).catch(function(err){
+    console.error('recs load failed',err);
+    recsGroups=[];recsLoadedOnce=true;
+    sub.textContent='Fresh picks from AniList';
+    document.getElementById('recsBanner').style.display='none';
+    if(btn){btn.disabled=false;btn.textContent='↻ Refresh';}
+    renderRecs();
+    if(force)showToast('Refresh failed — check your connection','warn','⚠');
+  });
+}
+function renderRecs(){
+  var cont=document.getElementById('view-recs');
+  if(!recsGroups.length){
+    cont.innerHTML='<div class="lib-empty"><div class="mle-ico">✨</div><p>Couldn\'t load recommendations.<br>Check your connection and tap <b>Refresh</b> to try again.</p></div>';
+    return;
+  }
+  var html='';
+  recsGroups.forEach(function(gr){
+    html+='<div class="day-sec"><div class="day-hd">'+gr.genre+' <span class="dcount">'+gr.items.length+'</span></div><div class="grid">';
+    gr.items.forEach(function(m){
+      var t=(m.title.english||m.title.romaji||'Untitled').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      var img=m.coverImage&&m.coverImage.large?m.coverImage.large:'';
+      var already=!!lib['al_'+m.id];
+      html+='<div class="acard rec-card">';
+      html+='<div class="pw">'+(img?'<img src="'+img+'" class="vis">':'<div class="shimmer"></div>')+'</div>';
+      html+='<div class="ci"><div class="ct">'+t+'</div>';
+      html+='<div class="tags"><span class="tag tsub">'+(m.seasonYear||'—')+'</span>'+(m.averageScore?'<span class="tag tdub">★ '+(m.averageScore/10).toFixed(1)+'</span>':'')+'</div>';
+      html+='<div class="rec-actions">';
+      if(already){html+='<span class="lsr-btn" style="opacity:.5">Added</span>';}
+      else{
+        html+='<button class="lsr-btn" onclick="quickAddSearch('+m.id+',true)">✓ Done</button>';
+        html+='<button class="lsr-btn primary" onclick="quickAddSearch('+m.id+',false)">+ Add</button>';
+      }
+      html+='</div></div></div>';
+    });
+    html+='</div></div>';
+  });
+  cont.innerHTML=html;
+}
+
+/* ══════════════════════════════════════════════════
+   NEXT EPISODE CALCULATOR
+   Finds the next episode air time from the start date
+   by advancing weekly until we find a future time.
+══════════════════════════════════════════════════ */
+function getNextEp(a){
+  var y=+a.s.substr(0,4),m=+a.s.substr(4,2)-1,d=+a.s.substr(6,2);
+  var uh=+a.utc.substr(0,2),um=+a.utc.substr(2,2);
+  var now=Date.now();
+  var epNum=0;
+  for(var w=0;w<52;w++){
+    var ep=new Date(Date.UTC(y,m,d+w*7,uh,um,0));
+    if(ep.getTime()>now){epNum=w+1;return {time:ep,ep:epNum};}
+  }
+  return null; // finished airing
+}
+
+function fmtCountdown(ms){
+  if(ms<=0)return null;
+  var s=Math.floor(ms/1000);
+  var days=Math.floor(s/86400);
+  var hrs=Math.floor((s%86400)/3600);
+  var mins=Math.floor((s%3600)/60);
+  var secs=s%60;
+  return {d:days,h:hrs,m:mins,s:secs};
+}
+
+/* ══════ MY LIST ══════ */
+var msort='next';
+function setMSort(s,btn){
+  msort=s;
+  document.querySelectorAll('.msort-btn').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');renderMyList();
+}
+
+function getUrgencyClass(ms){
+  if(ms<=0)return 'airing';
+  if(ms<=60*60*1000)return 'urgent';   // < 1 hour
+  if(ms<=24*60*60*1000)return 'soon';  // < 24 hours
+  return '';
+}
+function getCdColor(ms){
+  if(ms<=0)return 'green';
+  if(ms<=60*60*1000)return 'yellow';
+  if(ms<=24*60*60*1000)return 'orange';
+  return 'gray';
+}
+
+function renderMyList(){
+  var container=document.getElementById('mylist-content');
+  var picks=ANIME.filter(function(a){return sel[a.id];});
+  if(!picks.length){
+    container.innerHTML='<div class="mylist-empty"><div class="mle-ico">🎌</div><p>Your list is empty.<br>Go to <b>Browse</b>, tap any show<br>and press <b>✓ Add to My List</b>.</p></div>';
+    return;
+  }
+  if(msort==='next'){
+    picks.sort(function(a,b){
+      var na=getNextEp(a),nb=getNextEp(b);
+      if(!na&&!nb)return 0;if(!na)return 1;if(!nb)return -1;
+      return na.time-nb.time;
+    });
+  }else if(msort==='alpha'){
+    picks.sort(function(a,b){return a.title.localeCompare(b.title);});
+  }else{
+    picks.sort(function(a,b){return a.pl.localeCompare(b.pl)||a.title.localeCompare(b.title);});
+  }
+
+  var html='';
+  picks.forEach(function(a){
+    var next=getNextEp(a);
+    var url=covers[a.id]||'';
+    var safe=a.title.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    var isActive=activeId===a.id;
+    var ms=next?next.time-Date.now():null;
+    var urgency=ms!==null?getUrgencyClass(ms):'';
+    var cdColor=ms!==null?getCdColor(ms):'gray';
+    var nextDate=next?next.time.toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'}):'';
+    var nextTime=next?next.time.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'';
+
+    html+='<div class="ccard'+( urgency?' '+urgency:'')+(isActive?' adraw':'')+'" data-id="'+a.id+'" onclick="openDrawer(\''+a.id+'\')">';
+    html+='<button class="ccard-remove" onclick="removeFromList(event,\''+a.id+'\')">✕</button>';
+
+    // TOP: image + info
+    html+='<div class="ccard-top">';
+    html+='<div class="ccard-pl '+a.pl+'"></div>';
+    if(url){html+='<img class="ccard-img" src="'+url+'" alt="'+safe+'" onerror="this.outerHTML=\'<div class=ccard-img-ph>🎌</div>\'">';}
+    else{html+='<div class="ccard-img-ph">🎌</div>';}
+    html+='<div class="ccard-body">';
+    html+='<div class="ccard-title">'+safe+'</div>';
+    html+='<div class="ccard-meta"><span class="tpl '+a.pl+'">'+PL[a.pl]+'</span>'+(a.dub?'<span class="tag tdub">Dub</span>':'')+'</div>';
+    if(next){
+      html+='<div class="ep-info">Ep <b>'+next.ep+'</b> · '+nextDate+' at <b>'+nextTime+'</b></div>';
+    }else{
+      html+='<div class="ep-info" style="color:var(--muted);font-style:italic">Season finished</div>';
+    }
+    html+='</div></div>'; // end ccard-body, ccard-top
+
+    // BOTTOM: countdown
+    html+='<div class="ccard-cd">';
+    if(!next){
+      html+='<div style="font-size:10px;color:var(--muted2);font-style:italic">No upcoming episodes scheduled</div>';
+    }else if(ms!==null&&ms<=0){
+      // Airing RIGHT NOW
+      html+='<div class="airing-pill"><div class="airing-dot"></div><span class="airing-txt">Airing Right Now!</span></div>';
+    }else{
+      var cd=fmtCountdown(ms);
+      // Label changes based on urgency
+      var labelTxt=urgency==='urgent'?'⚡ Starting very soon!':urgency==='soon'?'🔥 Coming today!':'Next episode in';
+      var labelCls=urgency==='urgent'?'cd-label-urgent':urgency==='soon'?'cd-label-soon':'';
+      html+='<div class="cd-label '+(labelCls?labelCls:'')+'">'+labelTxt+'</div>';
+      html+='<div class="countdown-value" id="cd-'+a.id+'">';
+      if(cd.d>0){
+        html+='<div class="cd-block"><div class="cd-num '+cdColor+'" id="cdd-'+a.id+'">'+String(cd.d).padStart(2,'0')+'</div><div class="cd-unit">days</div></div>';
+        html+='<span class="cd-sep">:</span>';
+      }
+      html+='<div class="cd-block"><div class="cd-num '+cdColor+'" id="cdh-'+a.id+'">'+String(cd.h).padStart(2,'0')+'</div><div class="cd-unit">hours</div></div>';
+      html+='<span class="cd-sep">:</span>';
+      html+='<div class="cd-block"><div class="cd-num '+cdColor+'" id="cdm-'+a.id+'">'+String(cd.m).padStart(2,'0')+'</div><div class="cd-unit">min</div></div>';
+      html+='<span class="cd-sep">:</span>';
+      html+='<div class="cd-block"><div class="cd-num '+cdColor+'" id="cds-'+a.id+'">'+String(cd.s).padStart(2,'0')+'</div><div class="cd-unit">sec</div></div>';
+      html+='</div>';
+      // Progress bar (% of week elapsed toward next episode)
+      var weekMs=7*24*60*60*1000;
+      var pct=Math.max(0,Math.min(100,100-(ms/weekMs*100)));
+      html+='<div class="cd-progress"><div class="cd-progress-fill '+cdColor+'" id="cdp-'+a.id+'" style="width:'+pct.toFixed(2)+'%"></div></div>';
+    }
+    html+='</div>'; // ccard-cd
+    html+='</div>'; // ccard
+  });
+  container.innerHTML=html;
+}
+
+function removeFromList(e,id){
+  e.stopPropagation();
+  delete sel[id];
+  if(activeId===id)closeDrawer();
+  saveState();updateBar();renderMyList();renderBrowse();
+  showToast('Removed from My List','info','✕');
+}
+
+/* ── Live countdown tick — updates every second ─────────────────────
+   Updates ALL fields (days, hours, min, sec) individually each second.
+   Triggers a full re-render when urgency state changes (e.g. crosses
+   the 1h or 24h threshold) to update colors and labels.
+─────────────────────────────────────────────────────────────────── */
+function startCountdownTick(){
+  stopCountdownTick();
+  cdInterval=setInterval(tickCountdowns,1000);
+}
+function stopCountdownTick(){
+  if(cdInterval){clearInterval(cdInterval);cdInterval=null;}
+}
+function tickCountdowns(){
+  var picks=ANIME.filter(function(a){return sel[a.id];});
+  var needsRerender=false;
+  picks.forEach(function(a){
+    var next=getNextEp(a);if(!next)return;
+    var ms=next.time-Date.now();
+    // Check if urgency state just changed → full re-render needed
+    var prevUrgency=a._urgency||'';
+    var newUrgency=getUrgencyClass(ms);
+    if(newUrgency!==prevUrgency){a._urgency=newUrgency;needsRerender=true;return;}
+
+    if(ms<=0){needsRerender=true;return;} // just started airing
+
+    var cd=fmtCountdown(ms);
+    var s2=String(cd.s).padStart(2,'0');
+    var m2=String(cd.m).padStart(2,'0');
+    var h2=String(cd.h).padStart(2,'0');
+    var d2=String(cd.d).padStart(2,'0');
+
+    // Update each field directly — no full re-render needed
+    var eS=document.getElementById('cds-'+a.id);if(eS)eS.textContent=s2;
+    var eM=document.getElementById('cdm-'+a.id);if(eM)eM.textContent=m2;
+    var eH=document.getElementById('cdh-'+a.id);if(eH)eH.textContent=h2;
+    var eD=document.getElementById('cdd-'+a.id);if(eD)eD.textContent=d2;
+
+    // Progress bar (% of week elapsed)
+    var pbarEl=document.getElementById('cdp-'+a.id);
+    if(pbarEl){
+      var weekMs=7*24*60*60*1000;
+      var pct=Math.max(0,Math.min(100,100-(ms/weekMs*100)));
+      pbarEl.style.width=pct.toFixed(3)+'%';
+    }
+  });
+  if(needsRerender)renderMyList();
+}
+
+/* ══════ NOTIFICATIONS ══════ */
+function toggleNotif(){
+  if(!('Notification' in window)){showToast('Not supported in this browser','warn','⚠');return;}
+  if(notifOn){disableNotifs();return;}
+  if(Notification.permission==='granted')enableNotifs();
+  else if(Notification.permission!=='denied')Notification.requestPermission().then(function(p){if(p==='granted')enableNotifs();else showToast('Permission denied','warn','⚠');});
+  else showToast('Notifications blocked — check browser settings','warn','⚠');
+}
+function enableNotifs(){
+  notifOn=true;
+  document.getElementById('notifBtn').classList.add('notif-on');
+  document.getElementById('nlabel').textContent='Notifs On';
+  showToast('Enabled! Tap a show → 🔔 Notify','success','🔔');
+  var sn=getSN();Object.keys(sn).forEach(function(id){armNotif(id);});
+  sendSW({type:'TEST'});
+}
+function disableNotifs(){
+  notifOn=false;
+  Object.keys(ntimers).forEach(function(id){(ntimers[id]||[]).forEach(clearTimeout);});ntimers={};
+  document.getElementById('notifBtn').classList.remove('notif-on');
+  document.getElementById('nlabel').textContent='Notify Me';
+  showToast('Notifications disabled','info','✕');
+}
+function armNotif(id){
+  var a=ANIME.find(function(x){return x.id===id;});if(!a)return;
+  var eps=getEpData(a);
+  var tids=[];
+  eps.forEach(function(ep){
+    var diff=ep.notifyAt-Date.now();
+    if(diff>0)tids.push(setTimeout(function(){
+      if(!ntimers[id])return;
+      new Notification('🔔 Airing in 30 min!',{body:ep.title+'\nEp '+ep.ep+' · '+ep.pl+'\n'+ep.lt,tag:'ac-'+id+'-ep'+ep.ep,requireInteraction:false});
+    },diff));
+  });
+  if(tids.length)ntimers[id]=tids;
+  if(eps.length)sendSW({type:'SCHEDULE',shows:eps});
+}
+function disarmNotif(id){(ntimers[id]||[]).forEach(clearTimeout);delete ntimers[id];}
+function drawerToggleNotif(){
+  if(!activeId)return;
+  if(!notifOn){showToast('Tap "Notify Me" at the top first','warn','🔔');return;}
+  if(ntimers[activeId]){disarmNotif(activeId);setSN(activeId,false);showToast('Notification removed','info','✕');}
+  else{armNotif(activeId);setSN(activeId,true);showToast('Alert set for 30 min before each ep 🔔','success','🔔');}
+  updateDNot(activeId);
+}
+function updateDNot(id){
+  var btn=document.getElementById('daNot');if(!btn)return;
+  var on=!!ntimers[id];btn.className='da da-notif'+(on?' on':'');btn.textContent=on?'🔔 On':'🔔 Notify';
+  var box=document.getElementById('nbox'),msg=document.getElementById('nboxMsg');
+  if(on&&notifOn){
+    var a=ANIME.find(function(x){return x.id===id;});
+    var next=a?getNextEp(a):null;
+    if(next)msg.textContent='Next alert: '+new Date(next.time.getTime()-30*60*1000).toLocaleString([],{weekday:'short',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    box.classList.add('show');
+  }else box.classList.remove('show');
+}
+
+/* ══════ UPDATE ══════ */
+function doUpdate(){
+  var btn=document.getElementById('upBtn');btn.classList.add('spin');document.getElementById('ulabel').textContent='…';
+  var real=seasonForDate(new Date());
+  if(real.season!==CUR_SEASON||real.year!==CUR_YEAR){
+    // the season has rolled over since we last loaded — do a full switch
+    loadSeasonData(true,function(changed,isRollover){
+      loadState();renderBrowse();updateBar();initLoad();
+      btn.classList.remove('spin');document.getElementById('ulabel').textContent='Update';
+      var now=new Date();
+      document.getElementById('upLabel').textContent='Updated '+now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+      document.getElementById('upLabel').style.display='';document.getElementById('upSep').style.display='';
+      showToast('New season loaded: '+seasonLabel(CUR_SEASON,CUR_YEAR)+' 🎉','success','🌟');
+    });
+    return;
+  }
+  var range=seasonRange(CUR_SEASON,CUR_YEAR);
+  var exAL={},exTitles={};
+  ANIME.forEach(function(a){
+    if(a.al)exAL[a.al]=true;
+    exTitles[a.title.toLowerCase().trim()]=true;
+  });
+  fetchSeasonAnime(CUR_SEASON,CUR_YEAR,function(result){
+    var added=0;
+    (result||[]).forEach(function(a){
+      if(exAL[a.al]||exTitles[a.title.toLowerCase()])return;
+      if(a.s<range.startDs||a.s>range.endDs)return;
+      a.fromUpdate=true;
+      ANIME.push(a);
+      exAL[a.al]=true;exTitles[a.title.toLowerCase()]=true;added++;
+    });
+    btn.classList.remove('spin');document.getElementById('ulabel').textContent='Update';
+    var now=new Date();
+    document.getElementById('upLabel').textContent='Updated '+now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+    document.getElementById('upLabel').style.display='';document.getElementById('upSep').style.display='';
+    renderBrowse();saveCoverCache();
+    try{localStorage.setItem(SCK,JSON.stringify({key:seasonKeyOf(CUR_SEASON,CUR_YEAR),ts:Date.now(),anime:ANIME,covers:covers,descCache:descCache}));}catch(e){}
+    showToast(added>0?(added+' new show'+(added>1?'s':'')+' added! ✦'):'All up to date ✓',added>0?'success':'info',added>0?'✦':'✓');
+  });
+}
+
+/* ══════ DRAWER ══════ */
+function openDrawer(id){
+  var a=ANIME.find(function(x){return x.id===id;});if(!a)return;
+  activeId=id;
+  document.getElementById('dpl').className='dpl '+a.pl;
+  var img=document.getElementById('dimg'),wrap=document.getElementById('diw'),ph=document.getElementById('dph');
+  var url=covers[a.id]||'';
+  if(url){img.src=url;wrap.style.display='block';ph.style.display='none';}
+  else{wrap.style.display='none';ph.style.display='flex';}
+  document.getElementById('dtitle').textContent=a.title;
+  var next=getNextEp(a);
+  var uh=+a.utc.substr(0,2),um=+a.utc.substr(2,2);
+  var sy=+a.s.substr(0,4),sm=+a.s.substr(4,2)-1,sd=+a.s.substr(6,2);
+  var lt=new Date(Date.UTC(sy,sm,sd,uh,um,0)).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('dmeta').innerHTML=
+    (a.t==='n'?'<span style="font-size:8px;font-family:Rajdhani,sans-serif;font-weight:700;letter-spacing:.7px;text-transform:uppercase;padding:1px 5px;border-radius:3px;border:1px solid;color:#b09cf5;background:rgba(108,63,197,.13);border-color:rgba(124,82,217,.45)">New</span>':
+    '<span style="font-size:8px;font-family:Rajdhani,sans-serif;font-weight:700;letter-spacing:.7px;text-transform:uppercase;padding:1px 5px;border-radius:3px;border:1px solid;color:var(--orange);background:rgba(244,117,33,.09);border-color:rgba(244,117,33,.35)">On Air</span>')+
+    (a.dub?'<span class="tag tdub">Sub|Dub</span>':'<span class="tag tsub">Sub</span>')+
+    '<span class="tpl '+a.pl+'">'+PL[a.pl]+'</span>'+
+    (a.fromUpdate?'<span style="font-size:9px;color:var(--green)">✦ New</span>':'');
+  document.getElementById('dinfo').innerHTML=
+    '<div class="ic"><span style="color:var(--muted)">Premiere:</span><b>'+fmtDs(a.s)+'</b></div>'+
+    '<div class="ic"><span style="color:var(--muted)">Airtime:</span><b>'+lt+' local</b></div>'+
+    (next?'<div class="ic"><span style="color:var(--muted)">Next ep:</span><b>Ep '+next.ep+' · '+next.time.toLocaleDateString([],{weekday:'short',month:'short',day:'numeric'})+'</b></div>':'')+
+    '<div class="ic"><span style="color:var(--muted)">Stream:</span><b>'+PL[a.pl]+'</b></div>';
+  var de=document.getElementById('ddesc');
+  if(a.al&&descCache[a.al]){de.textContent=descCache[a.al];de.className='ddesc';}
+  else if(a.al){
+    de.textContent='Fetching description…';de.className='ddesc loading';
+    fetch('https://graphql.anilist.co',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body:JSON.stringify({query:'{Media(id:'+a.al+',type:ANIME){description(asHtml:false)coverImage{extraLarge}}}'})})
+    .then(function(r){return r.json();}).then(function(data){
+      var m=data&&data.data&&data.data.Media;
+      if(m){
+        if(m.description){var c=m.description.replace(/<[^>]*>/g,'').replace(/\n+/g,' ').trim();descCache[a.al]=c;if(activeId===id){de.textContent=c;de.className='ddesc';}}
+        if(m.coverImage&&!covers[a.id]){
+          covers[a.id]=m.coverImage.extraLarge;
+          if(!img.src||img.style.display==='none'){img.src=covers[a.id];wrap.style.display='block';ph.style.display='none';}
+          injectImg(a.id,covers[a.id]);saveCoverCache();
+        }
+      }
+    }).catch(function(){if(activeId===id){de.textContent='No description available.';de.className='ddesc';}});
+  }else{de.textContent='No description available yet.';de.className='ddesc';}
+  updateDAdd(id);updateDNot(id);
+  document.querySelectorAll('.acard,.ccard').forEach(function(c){c.classList.remove('adraw');});
+  var card=document.querySelector('[data-id="'+id+'"]');if(card)card.classList.add('adraw');
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('ovBg').classList.add('show');
+  document.getElementById('page').classList.add('drawer-open');
+}
+function closeDrawer(){
+  activeId=null;document.getElementById('drawer').classList.remove('open');
+  document.getElementById('ovBg').classList.remove('show');document.getElementById('page').classList.remove('drawer-open');
+  document.querySelectorAll('.acard,.ccard').forEach(function(c){c.classList.remove('adraw');});
+}
+function updateDAdd(id){
+  var btn=document.getElementById('daAdd');if(!btn)return;
+  if(sel[id]){btn.textContent='✓ In My List';btn.className='da da-rem';}
+  else{btn.textContent='Add to My List';btn.className='da da-add';}
+}
+function drawerToggleSel(){
+  if(!activeId)return;
+  if(sel[activeId])delete sel[activeId];else sel[activeId]=true;
+  saveState();updateDAdd(activeId);updateBar();renderBrowse();
+  if(curTab==='mylist')renderMyList();
+}
+
+/* ══════ BROWSE ══════ */
+function setF(f,btn){
+  filt=f;document.querySelectorAll('.fb').forEach(function(b){b.classList.remove('on');});
+  btn.classList.add('on');renderBrowse();
+}
+function getBrowseList(){
+  var q=(document.getElementById('srch')||{}).value||'';q=q.toLowerCase();
+  return ANIME.filter(function(a){
+    if(filt==='new'&&a.t!=='n')return false;
+    if(filt==='cont'&&a.t!=='c')return false;
+    if(filt==='dub'&&!a.dub)return false;
+    if(['cr','nf','hd','hv'].indexOf(filt)>-1&&a.pl!==filt)return false;
+    if(q&&a.title.toLowerCase().indexOf(q)===-1)return false;
+    return true;
+  });
+}
+function renderBrowse(){
+  var list=getBrowseList();
+  document.getElementById('sc2').textContent=list.length;
+  document.getElementById('hSub').textContent=ANIME.length+' shows · Crunchyroll · Netflix · HIDIVE';
+  var cont=document.getElementById('view-browse');
+  if(!list.length){cont.innerHTML='<div style="text-align:center;padding:50px 20px;color:var(--muted);font-size:13px">No anime found.</div>';return;}
+  var grp={};list.forEach(function(a){if(!grp[a.s])grp[a.s]=[];grp[a.s].push(a);});
+  var dates=Object.keys(grp).sort();
+  var html='';
+  dates.forEach(function(ds){
+    var items=grp[ds];var day=dnFull(ds);
+    html+='<div class="day-sec"><div class="day-hd">'+day+' <span class="dpill">'+dn(ds)+' · '+fmtDsS(ds)+'</span><span class="dcount">'+items.length+'</span></div><div class="grid">';
+    items.forEach(function(a){
+      var isSel=!!sel[a.id];var isActive=activeId===a.id;var hasN=!!ntimers[a.id];
+      var safe=a.title.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      var url=covers[a.id]||'';
+      html+='<div class="acard'+(isSel?' sel':'')+(isActive?' adraw':'')+'" data-id="'+a.id+'" onclick="cardClick(event,\''+a.id+'\')">';
+      html+='<div class="pstrip '+a.pl+'"></div><div class="ck"></div>';
+      if(hasN)html+='<div class="noti">🔔</div>';
+      if(a.t==='n')html+='<div class="nbadge">New</div>';
+      html+='<div class="pw"><div class="shimmer" id="s-'+a.id+'"'+(url?' style="display:none"':'')+' ></div>';
+      html+='<img id="i-'+a.id+'" alt="'+safe+'" '+(url?'src="'+url+'" class="vis"':'style="display:none"')+' onerror="this.style.display=\'none\'">';
+      html+='</div><div class="ci"><div class="ct">'+safe+'</div>';
+      html+='<div class="tags">'+(a.dub?'<span class="tag tdub">Dub</span>':'<span class="tag tsub">Sub</span>')+'<span class="tpl '+a.pl+'">'+PL[a.pl]+'</span></div></div></div>';
+    });
+    html+='</div></div>';
+  });
+  cont.innerHTML=html;
+}
+
+function cardClick(e,id){
+  if(e.target.closest('.ck')){
+    if(sel[id])delete sel[id];else sel[id]=true;
+    if(activeId===id)updateDAdd(id);
+    saveState();updateBar();renderBrowse();
+    if(curTab==='mylist')renderMyList();
+    return;
+  }
+  openDrawer(id);
+}
+function selAll(){
+  var list=getBrowseList(),allOn=list.every(function(a){return sel[a.id];});
+  list.forEach(function(a){if(allOn)delete sel[a.id];else sel[a.id]=true;});
+  saveState();updateBar();renderBrowse();if(curTab==='mylist')renderMyList();
+}
+function updateBar(){
+  var c=Object.keys(sel).length;
+  document.getElementById('selc').textContent=c;document.getElementById('selc2').textContent=c;
+  document.getElementById('ebtn').disabled=c===0;
+  // My List tab badge
+  var badge=document.getElementById('myListBadge');
+  if(c>0){badge.textContent=c;badge.style.display='';}else badge.style.display='none';
+}
+
+/* ══════ HELPERS ══════ */
+function fmtDs(ds){return MN[+ds.substr(4,2)-1]+' '+ds.substr(6,2).replace(/^0/,'')+', '+ds.substr(0,4);}
+function fmtDsS(ds){return MN[+ds.substr(4,2)-1]+' '+ds.substr(6,2).replace(/^0/,'');}
+function dn(ds){var D=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];return D[new Date(+ds.substr(0,4),+ds.substr(4,2)-1,+ds.substr(6,2)).getDay()];}
+function dnFull(ds){var D=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];return D[new Date(+ds.substr(0,4),+ds.substr(4,2)-1,+ds.substr(6,2)).getDay()];}
+function p2(n){return n<10?'0'+n:''+n;}
+
+/* ══════ TOAST ══════ */
+var TT=null;
+function showToast(msg,type,icon){
+  clearTimeout(TT);var t=document.getElementById('toast');
+  document.getElementById('tm').textContent=msg;document.getElementById('ti').textContent=icon||'✓';
+  t.className='toast '+(type||'info')+' show';
+  TT=setTimeout(function(){t.classList.remove('show');},3500);
+}
+
+/* ══════ ICS EXPORT ══════ */
+function esc(s){return(s||'').replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n');}
+function fold(l){if(l.length<=75)return l;var o='',i=0;while(i<l.length){if(i===0){o+=l.substr(0,75);i=75;}else{o+='\r\n '+l.substr(i,74);i+=74;}}return o;}
+function dtstamp(){var n=new Date();return n.getUTCFullYear()+''+p2(n.getUTCMonth()+1)+''+p2(n.getUTCDate())+'T'+p2(n.getUTCHours())+''+p2(n.getUTCMinutes())+''+p2(n.getUTCSeconds())+'Z';}
+function uid(){return Date.now()+'-'+Math.random().toString(36).substr(2,9)+'@animecal.app';}
+function addMin(u,m){var h=+u.substr(0,2),mn=+u.substr(2,2)+m;h+=Math.floor(mn/60);mn%=60;return p2(h)+p2(mn)+'00';}
+
+function doExport(){
+  var picks=ANIME.filter(function(a){return sel[a.id];});if(!picks.length)return;
+  var stamp=dtstamp();
+  var label=seasonLabel(CUR_SEASON,CUR_YEAR);
+  var untilTs=seasonRange(CUR_SEASON,CUR_YEAR).endDs+'T235959Z';
+  var L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Anime Calendar//'+label+'//EN',
+    'CALSCALE:GREGORIAN','METHOD:PUBLISH','X-WR-CALNAME:Anime '+label];
+  picks.forEach(function(a){
+    L.push('BEGIN:VEVENT');L.push(fold('UID:'+uid()));L.push('DTSTAMP:'+stamp);
+    L.push('DTSTART:'+a.s+'T'+a.utc+'Z');L.push('DTEND:'+a.s+'T'+addMin(a.utc,30)+'Z');
+    L.push('RRULE:FREQ=WEEKLY;UNTIL='+untilTs);
+    L.push(fold('SUMMARY:'+esc(a.title)));
+    L.push(fold('DESCRIPTION:'+esc('Streaming on '+PL[a.pl]+(a.dub?'\nSub + Dub':'\nSubtitled'))));
+    L.push(fold('URL:https://www.'+(a.pl==='cr'?'crunchyroll':a.pl==='nf'?'netflix':a.pl==='hd'?'hidive':'hulu')+'.com'));
+    L.push('STATUS:CONFIRMED');L.push('TRANSP:TRANSPARENT');
+    L.push('BEGIN:VALARM');L.push('TRIGGER:-PT30M');L.push('ACTION:DISPLAY');
+    L.push(fold('DESCRIPTION:'+esc(a.title+' starts in 30 min on '+PL[a.pl]+'!')));
+    L.push('END:VALARM');L.push('END:VEVENT');
+  });
+  L.push('END:VCALENDAR');
+  var blob=new Blob([L.join('\r\n')+'\r\n'],{type:'text/calendar;charset=utf-8'});
+  var url=URL.createObjectURL(blob);
+  var fname='anime-'+CUR_SEASON.toLowerCase()+CUR_YEAR+'.ics';
+  var el=document.createElement('a');el.href=url;el.download=fname;
+  document.body.appendChild(el);el.click();document.body.removeChild(el);URL.revokeObjectURL(url);
+  setTimeout(function(){document.getElementById('modal').classList.add('show');},400);
+}
+
+/* ══════ BOOT ══════ */
+generateIcon();
+loadCoverCache();loadLib();
+loadSeasonData(false,function(){
+  loadState();
+  if(SYNC_ENABLED){
+    ensureSyncCode();
+    setSyncStatus('syncing');
+  }else{
+    setSyncStatus('unconfigured');
+  }
+  function afterSync(){
+    try{
+      var dbg=document.getElementById('dbgLine');
+      if(dbg)dbg.textContent=location.hostname+' · '+Object.keys(sel).length+' selected · '+Object.keys(lib).length+' in history';
+    }catch(e){}
+    renderBrowse();updateBar();
+    if(curTab==='library')renderLibrary();
+    initLoad();
+    registerSW();
+    if(/iphone|ipad|ipod/i.test(navigator.userAgent)&&window.navigator.standalone!==true&&!localStorage.getItem('ib'))
+      document.getElementById('ib').classList.add('show');
+    if('Notification' in window&&Notification.permission==='granted'){
+      notifOn=true;
+      document.getElementById('notifBtn').classList.add('notif-on');
+      document.getElementById('nlabel').textContent='Notifs On';
+      var sn=getSN();Object.keys(sn).forEach(function(id){armNotif(id);});
+    }
+    // Keep checking for a season rollover for as long as the app stays open
+    setInterval(checkSeasonRollover,60*60*1000); // hourly
+    document.addEventListener('visibilitychange',function(){if(!document.hidden)checkSeasonRollover();});
+  }
+  if(SYNC_ENABLED)pullSync(function(){afterSync();});
+  else afterSync();
+});
+</script>
+</body>
+</html>
