@@ -2345,7 +2345,6 @@ function doUpdate(){
     });
     return;
   }
-  var range=seasonRange(CUR_SEASON,CUR_YEAR);
   var exAL={},exTitles={};
   ANIME.forEach(function(a){
     if(a.al)exAL[a.al]=true;
@@ -2355,7 +2354,6 @@ function doUpdate(){
     var added=0;
     (result||[]).forEach(function(a){
       if(exAL[a.al]||exTitles[a.title.toLowerCase()])return;
-      if(a.s<range.startDs||a.s>range.endDs)return;
       a.fromUpdate=true;
       ANIME.push(a);
       exAL[a.al]=true;exTitles[a.title.toLowerCase()]=true;added++;
